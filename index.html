@@ -1,0 +1,687 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="RE Scripts">
+<meta name="theme-color" content="#1A1A1A">
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icon-192.png">
+<title>RE Script Generator</title>
+<style>
+  :root {
+    --bg: #FAF9F6;
+    --bg2: #F2F0EC;
+    --bg3: #E8E5DF;
+    --text: #1A1A1A;
+    --text2: #666660;
+    --text3: #999994;
+    --border: rgba(0,0,0,0.1);
+    --border2: rgba(0,0,0,0.18);
+    --radius: 12px;
+    --radius-sm: 8px;
+    --safe-top: env(safe-area-inset-top, 0px);
+    --safe-bot: env(safe-area-inset-bottom, 0px);
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #141414;
+      --bg2: #1E1E1E;
+      --bg3: #2A2A2A;
+      --text: #F0EEE8;
+      --text2: #999994;
+      --text3: #666660;
+      --border: rgba(255,255,255,0.1);
+      --border2: rgba(255,255,255,0.18);
+    }
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+  html, body { height: 100%; background: var(--bg); color: var(--text); font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', sans-serif; }
+
+  /* ── SHELL ── */
+  #app { display: flex; flex-direction: column; height: 100%; max-width: 600px; margin: 0 auto; }
+
+  /* ── HEADER ── */
+  .header {
+    padding: calc(var(--safe-top) + 14px) 20px 14px;
+    background: var(--bg);
+    border-bottom: 0.5px solid var(--border);
+    display: flex; align-items: center; justify-content: space-between;
+    position: sticky; top: 0; z-index: 10;
+  }
+  .header-title { font-size: 17px; font-weight: 600; letter-spacing: -0.3px; }
+  .header-sub { font-size: 12px; color: var(--text3); margin-top: 1px; }
+  .settings-btn {
+    width: 36px; height: 36px; border-radius: 50%;
+    background: var(--bg2); border: 0.5px solid var(--border);
+    display: flex; align-items: center; justify-content: center;
+    cursor: pointer; font-size: 16px;
+  }
+
+  /* ── TABS ── */
+  .tabs {
+    display: flex; background: var(--bg);
+    border-bottom: 0.5px solid var(--border);
+    padding: 0 20px;
+  }
+  .tab {
+    flex: 1; padding: 10px 0; text-align: center;
+    font-size: 13px; font-weight: 500; color: var(--text3);
+    cursor: pointer; border-bottom: 2px solid transparent;
+    transition: color 0.15s, border-color 0.15s;
+  }
+  .tab.active { color: var(--text); border-bottom-color: var(--text); }
+
+  /* ── SCROLL CONTENT ── */
+  .content {
+    flex: 1; overflow-y: auto;
+    padding: 20px 20px calc(var(--safe-bot) + 24px);
+    -webkit-overflow-scrolling: touch;
+  }
+
+  /* ── FORM ELEMENTS ── */
+  .section { margin-bottom: 20px; }
+  .field-label {
+    font-size: 11px; font-weight: 600; color: var(--text3);
+    text-transform: uppercase; letter-spacing: 0.6px;
+    margin-bottom: 6px; display: block;
+  }
+  input[type=text], input[type=password], textarea {
+    width: 100%; padding: 12px 14px;
+    background: var(--bg2); border: 0.5px solid var(--border);
+    border-radius: var(--radius-sm); color: var(--text);
+    font-family: inherit; font-size: 16px; /* 16px prevents iOS zoom */
+    outline: none; appearance: none; -webkit-appearance: none;
+    transition: border-color 0.15s;
+  }
+  input[type=text]:focus, input[type=password]:focus, textarea:focus {
+    border-color: var(--border2);
+    background: var(--bg);
+  }
+  textarea { resize: none; line-height: 1.5; min-height: 80px; }
+
+  /* ── CHIP SELECTORS ── */
+  .chips { display: flex; flex-wrap: wrap; gap: 8px; }
+  .chip {
+    padding: 7px 14px; border-radius: 999px;
+    border: 0.5px solid var(--border2);
+    background: var(--bg2); color: var(--text2);
+    font-size: 13px; font-weight: 500; cursor: pointer;
+    transition: all 0.12s; user-select: none;
+  }
+  .chip.on { background: var(--text); color: var(--bg); border-color: var(--text); }
+
+  /* ── GENERATE BUTTON ── */
+  .gen-btn {
+    width: 100%; padding: 15px;
+    background: var(--text); color: var(--bg);
+    border: none; border-radius: var(--radius);
+    font-family: inherit; font-size: 16px; font-weight: 600;
+    cursor: pointer; margin-top: 8px;
+    transition: opacity 0.15s, transform 0.1s;
+    -webkit-appearance: none;
+  }
+  .gen-btn:active { opacity: 0.8; transform: scale(0.99); }
+  .gen-btn:disabled { opacity: 0.35; }
+
+  /* ── RESULTS ── */
+  .results { display: flex; flex-direction: column; gap: 16px; }
+
+  .script-card {
+    background: var(--bg2);
+    border: 0.5px solid var(--border);
+    border-radius: var(--radius);
+    overflow: hidden;
+  }
+  .card-header {
+    padding: 12px 14px 10px;
+    border-bottom: 0.5px solid var(--border);
+    display: flex; align-items: flex-start; justify-content: space-between; gap: 8px;
+  }
+  .card-meta { flex: 1; min-width: 0; }
+  .card-title { font-size: 14px; font-weight: 600; line-height: 1.3; }
+  .badge-row { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 5px; }
+  .badge {
+    font-size: 11px; font-weight: 600; padding: 3px 8px;
+    border-radius: 999px; white-space: nowrap;
+  }
+  .b-classic { background: #D4E8F8; color: #0C447C; }
+  .b-viral   { background: #FAE4C0; color: #633806; }
+  .b-story   { background: #D8ECC8; color: #27500A; }
+  .b-brief   { background: #E4E2FC; color: #3C3489; }
+  .b-struct  { background: var(--bg3); color: var(--text2); }
+
+  .copy-btn {
+    padding: 6px 12px; border-radius: var(--radius-sm);
+    border: 0.5px solid var(--border2);
+    background: var(--bg); color: var(--text2);
+    font-family: inherit; font-size: 12px; font-weight: 500;
+    cursor: pointer; white-space: nowrap; flex-shrink: 0;
+  }
+  .copy-btn:active { opacity: 0.6; }
+
+  .card-body { padding: 14px; }
+  .segment { margin-bottom: 14px; }
+  .segment:last-child { margin-bottom: 0; }
+  .seg-tag {
+    font-size: 10px; font-weight: 700; letter-spacing: 0.7px;
+    text-transform: uppercase; color: var(--text3);
+    padding: 3px 7px; border: 0.5px solid var(--border);
+    border-radius: 4px; display: inline-block; margin-bottom: 7px;
+  }
+  .seg-text { font-size: 14px; line-height: 1.7; color: var(--text); }
+  .seg-text.broll { color: var(--text2); font-style: italic; font-size: 13px; }
+
+  /* ── LOADING ── */
+  .loading {
+    display: flex; flex-direction: column; align-items: center;
+    padding: 48px 24px; gap: 16px; color: var(--text3); font-size: 14px;
+  }
+  .spinner {
+    width: 28px; height: 28px; border-radius: 50%;
+    border: 2px solid var(--border2);
+    border-top-color: var(--text);
+    animation: spin 0.7s linear infinite;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* ── EMPTY / ERROR STATES ── */
+  .empty {
+    text-align: center; padding: 40px 20px;
+    color: var(--text3); font-size: 14px; line-height: 1.6;
+  }
+  .empty-icon { font-size: 32px; margin-bottom: 12px; }
+
+  /* ── SETTINGS MODAL ── */
+  .overlay {
+    position: fixed; inset: 0; z-index: 100;
+    background: rgba(0,0,0,0.5);
+    display: flex; align-items: flex-end;
+    opacity: 0; pointer-events: none; transition: opacity 0.2s;
+  }
+  .overlay.show { opacity: 1; pointer-events: all; }
+  .sheet {
+    width: 100%; max-width: 600px; margin: 0 auto;
+    background: var(--bg);
+    border-radius: 20px 20px 0 0;
+    padding: 20px 20px calc(var(--safe-bot) + 24px);
+    transform: translateY(100%); transition: transform 0.25s cubic-bezier(.32,.72,0,1);
+  }
+  .overlay.show .sheet { transform: translateY(0); }
+  .sheet-handle {
+    width: 36px; height: 4px; border-radius: 2px;
+    background: var(--border2); margin: 0 auto 20px;
+  }
+  .sheet-title { font-size: 17px; font-weight: 600; margin-bottom: 16px; }
+
+  /* ── SAVED SCRIPTS ── */
+  .saved-empty { text-align: center; padding: 48px 20px; color: var(--text3); font-size: 14px; }
+  .saved-card {
+    background: var(--bg2); border: 0.5px solid var(--border);
+    border-radius: var(--radius); padding: 12px 14px;
+    margin-bottom: 12px; cursor: pointer;
+  }
+  .saved-card-title { font-size: 14px; font-weight: 600; }
+  .saved-card-meta { font-size: 12px; color: var(--text3); margin-top: 3px; }
+  .delete-btn { color: #C0392B; font-size: 12px; margin-top: 6px; cursor: pointer; background: none; border: none; font-family: inherit; padding: 0; }
+
+  /* ── UTIL ── */
+  .divider { height: 0.5px; background: var(--border); margin: 16px 0; }
+  .tip { font-size: 12px; color: var(--text3); line-height: 1.5; margin-top: 6px; }
+</style>
+</head>
+<body>
+<div id="app">
+
+  <div class="header">
+    <div>
+      <div class="header-title">RE Script Generator</div>
+      <div class="header-sub">On-site video scripts</div>
+    </div>
+    <div class="settings-btn" onclick="openSettings()">⚙️</div>
+  </div>
+
+  <div class="tabs">
+    <div class="tab active" id="tab-generate" onclick="switchTab('generate')">Generate</div>
+    <div class="tab" id="tab-saved" onclick="switchTab('saved')">Saved</div>
+  </div>
+
+  <div class="content" id="main-content">
+    <!-- GENERATE TAB -->
+    <div id="view-generate">
+
+      <div class="section">
+        <label class="field-label">Address</label>
+        <input type="text" id="f-address" placeholder="123 Oak St, Westfield, NJ" autocomplete="off">
+      </div>
+
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px" class="section">
+        <div>
+          <label class="field-label">Price</label>
+          <input type="text" id="f-price" placeholder="$589,000">
+        </div>
+        <div>
+          <label class="field-label">Beds / Baths</label>
+          <input type="text" id="f-beds" placeholder="4bd / 2.5ba">
+        </div>
+      </div>
+
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px" class="section">
+        <div>
+          <label class="field-label">Sq Ft</label>
+          <input type="text" id="f-sqft" placeholder="2,200 sq ft">
+        </div>
+        <div>
+          <label class="field-label">Agent Name</label>
+          <input type="text" id="f-agent" placeholder="Sarah Johnson">
+        </div>
+      </div>
+
+      <div class="section">
+        <label class="field-label">Key Features (comma separated)</label>
+        <input type="text" id="f-features" placeholder="renovated kitchen, pool, finished basement">
+      </div>
+
+      <div class="section">
+        <label class="field-label">Neighborhood / Vibe (optional)</label>
+        <input type="text" id="f-vibe" placeholder="top schools, quiet street, near downtown">
+      </div>
+
+      <div class="section">
+        <label class="field-label">Extra selling points (optional)</label>
+        <textarea id="f-extras" placeholder="Original hardwoods, 2-car garage, new roof 2023..."></textarea>
+      </div>
+
+      <div class="divider"></div>
+
+      <div class="section">
+        <label class="field-label">Style</label>
+        <div class="chips" id="style-chips">
+          <div class="chip on" data-val="classic">Classic</div>
+          <div class="chip on" data-val="viral">Viral</div>
+          <div class="chip on" data-val="story">Storytelling</div>
+          <div class="chip on" data-val="brief">Brief intro</div>
+        </div>
+      </div>
+
+      <div class="section">
+        <label class="field-label">Structure</label>
+        <div class="chips" id="struct-chips">
+          <div class="chip on" data-val="intro_only">Intro only</div>
+          <div class="chip on" data-val="bookend">Bookend</div>
+          <div class="chip on" data-val="multi">Multi-segment</div>
+          <div class="chip on" data-val="voiceover">Voiceover</div>
+        </div>
+      </div>
+
+      <button class="gen-btn" id="gen-btn" onclick="generate()">Generate Scripts</button>
+
+      <div id="results" style="margin-top:20px"></div>
+    </div>
+
+    <!-- SAVED TAB -->
+    <div id="view-saved" style="display:none">
+      <div id="saved-list"></div>
+    </div>
+  </div>
+</div>
+
+<!-- SETTINGS SHEET -->
+<div class="overlay" id="settings-overlay" onclick="closeSettingsOutside(event)">
+  <div class="sheet">
+    <div class="sheet-handle"></div>
+    <div class="sheet-title">Settings</div>
+
+    <label class="field-label">Anthropic API Key</label>
+    <input type="password" id="api-key-input" placeholder="sk-ant-..." autocomplete="off" autocorrect="off" spellcheck="false">
+    <div class="tip">Your key is stored only on this device. Never shared.</div>
+
+    <div class="divider"></div>
+
+    <label class="field-label">Default Agent Name (optional)</label>
+    <input type="text" id="default-agent" placeholder="Your name — auto-fills the form">
+
+    <div class="divider"></div>
+
+    <button class="gen-btn" onclick="saveSettings()">Save Settings</button>
+    <button class="gen-btn" style="background:transparent;color:var(--text);border:0.5px solid var(--border2);margin-top:10px" onclick="closeSettings()">Cancel</button>
+  </div>
+</div>
+
+<!-- SAVED SCRIPT VIEWER -->
+<div class="overlay" id="view-overlay" onclick="closeViewOutside(event)">
+  <div class="sheet" style="max-height:85vh;overflow-y:auto">
+    <div class="sheet-handle"></div>
+    <div id="view-sheet-content"></div>
+    <button class="gen-btn" style="background:transparent;color:var(--text);border:0.5px solid var(--border2);margin-top:16px" onclick="closeView()">Close</button>
+  </div>
+</div>
+
+<script>
+// ── INIT ──────────────────────────────────────────────────────────────────
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('./sw.js').catch(() => {});
+}
+
+function loadSettings() {
+  const key = localStorage.getItem('anthropic_key') || '';
+  const agent = localStorage.getItem('default_agent') || '';
+  document.getElementById('api-key-input').value = key;
+  document.getElementById('default-agent').value = agent;
+  if (agent && !document.getElementById('f-agent').value) {
+    document.getElementById('f-agent').value = agent;
+  }
+}
+
+function saveSettings() {
+  const key = document.getElementById('api-key-input').value.trim();
+  const agent = document.getElementById('default-agent').value.trim();
+  localStorage.setItem('anthropic_key', key);
+  localStorage.setItem('default_agent', agent);
+  closeSettings();
+  showToast('Settings saved');
+}
+
+function openSettings() {
+  loadSettings();
+  document.getElementById('settings-overlay').classList.add('show');
+}
+function closeSettings() { document.getElementById('settings-overlay').classList.remove('show'); }
+function closeSettingsOutside(e) { if (e.target === e.currentTarget) closeSettings(); }
+
+function closeView() { document.getElementById('view-overlay').classList.remove('show'); }
+function closeViewOutside(e) { if (e.target === e.currentTarget) closeView(); }
+
+// ── TABS ──────────────────────────────────────────────────────────────────
+function switchTab(t) {
+  document.getElementById('view-generate').style.display = t === 'generate' ? '' : 'none';
+  document.getElementById('view-saved').style.display = t === 'saved' ? '' : 'none';
+  document.getElementById('tab-generate').classList.toggle('active', t === 'generate');
+  document.getElementById('tab-saved').classList.toggle('active', t === 'saved');
+  if (t === 'saved') renderSaved();
+}
+
+// ── CHIPS ─────────────────────────────────────────────────────────────────
+document.querySelectorAll('.chip').forEach(c => {
+  c.addEventListener('click', () => c.classList.toggle('on'));
+});
+
+function getChips(id) {
+  return [...document.querySelectorAll(`#${id} .chip.on`)].map(c => c.dataset.val);
+}
+
+// ── LABELS ───────────────────────────────────────────────────────────────
+const STYLE_META = {
+  classic: { label: 'Classic', cls: 'b-classic' },
+  viral:   { label: 'Viral',   cls: 'b-viral' },
+  story:   { label: 'Storytelling', cls: 'b-story' },
+  brief:   { label: 'Brief intro',  cls: 'b-brief' },
+};
+const STRUCT_LABELS = {
+  intro_only: 'Intro only',
+  bookend:    'Bookend',
+  multi:      'Multi-segment',
+  voiceover:  'Voiceover',
+};
+
+// ── GENERATE ─────────────────────────────────────────────────────────────
+async function generate() {
+  const apiKey = localStorage.getItem('anthropic_key') || '';
+  if (!apiKey) {
+    openSettings();
+    showToast('Add your API key first');
+    return;
+  }
+
+  const address  = document.getElementById('f-address').value.trim();
+  const price    = document.getElementById('f-price').value.trim();
+  const beds     = document.getElementById('f-beds').value.trim();
+  const sqft     = document.getElementById('f-sqft').value.trim();
+  const features = document.getElementById('f-features').value.trim();
+  const agent    = document.getElementById('f-agent').value.trim();
+  const vibe     = document.getElementById('f-vibe').value.trim();
+  const extras   = document.getElementById('f-extras').value.trim();
+
+  const styles   = getChips('style-chips');
+  const structs  = getChips('struct-chips');
+
+  if (!features && !address) {
+    showToast('Enter at least an address or features');
+    return;
+  }
+  if (!styles.length || !structs.length) {
+    showToast('Select at least one style and structure');
+    return;
+  }
+
+  const btn = document.getElementById('gen-btn');
+  btn.disabled = true; btn.textContent = 'Generating…';
+
+  document.getElementById('results').innerHTML = `
+    <div class="loading">
+      <div class="spinner"></div>
+      <div>Writing your scripts…</div>
+    </div>`;
+
+  const combos = [];
+  for (const s of styles) for (const st of structs) combos.push({ style: s, structure: st });
+
+  const propInfo = [
+    address  && `Address: ${address}`,
+    price    && `Price: ${price}`,
+    beds     && `Beds/baths: ${beds}`,
+    sqft     && `Sq ft: ${sqft}`,
+    features && `Key features: ${features}`,
+    agent    && `Agent: ${agent}`,
+    vibe     && `Neighborhood vibe: ${vibe}`,
+    extras   && `Additional: ${extras}`,
+  ].filter(Boolean).join('\n');
+
+  const styleDesc = {
+    classic: 'Professional, polished, trustworthy. Warm but not cheesy.',
+    viral:   'Hook-first. High energy. Social media optimized. Unexpected angle. Could be humorous or bold.',
+    story:   'Emotionally driven. Paint a lifestyle picture — who lives here, what mornings look like.',
+    brief:   'Ultra-short. 3–5 sentences MAX across all agent segments combined.',
+  };
+  const structDesc = {
+    intro_only: 'Agent speaks ONCE at the start only. B-roll takes over after.',
+    bookend:    'Agent speaks at START and END. B-roll fills the middle.',
+    multi:      'Agent appears 3–4 times. Include [CUT TO: location] direction notes.',
+    voiceover:  'No on-camera agent. Narration style voiceover over b-roll.',
+  };
+
+  const system = `You are a professional real estate video scriptwriter. Return ONLY a valid JSON array, no markdown, no backticks, no preamble.
+
+Format:
+[{"style":"classic","structure":"intro_only","title":"Short title","segments":[{"tag":"AGENT — FRONT DOOR","text":"..."},{"tag":"B-ROLL","text":"[Shot suggestions]"}]}]
+
+Rules:
+- intro_only: 1–2 segments (agent open + b-roll note)
+- bookend: 3 segments (open, b-roll, close)
+- multi: 4–5 segments with [CUT TO: location] b-roll tags
+- voiceover: 2–3 segments labeled as VO, no on-camera language
+- viral: NEVER start with "welcome to"
+- brief: 3–5 sentences total across ALL agent segments
+- Write naturally, like a person actually talks
+- B-roll tags describe shots, not spoken dialogue
+- Keep it tight — no filler`;
+
+  const userMsg = `Property:\n${propInfo}\n\nGenerate for:\n${combos.map(c => `- ${c.style} / ${c.structure} (${styleDesc[c.style]} | ${structDesc[c.structure]})`).join('\n')}`;
+
+  try {
+    const res = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-api-key': apiKey,
+        'anthropic-version': '2023-06-01',
+        'anthropic-dangerous-direct-browser-access': 'true',
+      },
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-20250514',
+        max_tokens: 4000,
+        system,
+        messages: [{ role: 'user', content: userMsg }],
+      }),
+    });
+
+    const data = await res.json();
+    if (data.error) throw new Error(data.error.message);
+
+    const raw = data.content.map(i => i.text || '').join('');
+    const scripts = JSON.parse(raw.replace(/```json|```/g, '').trim());
+
+    renderScripts(scripts, address || features);
+  } catch (err) {
+    document.getElementById('results').innerHTML = `
+      <div class="empty">
+        <div class="empty-icon">⚠️</div>
+        <div>${err.message || 'Something went wrong. Check your API key in Settings.'}</div>
+      </div>`;
+  }
+
+  btn.disabled = false; btn.textContent = 'Generate Scripts';
+}
+
+// ── RENDER SCRIPTS ────────────────────────────────────────────────────────
+function renderScripts(scripts, property) {
+  const el = document.getElementById('results');
+  el.innerHTML = '';
+
+  scripts.forEach((s, i) => {
+    const meta = STYLE_META[s.style] || { label: s.style, cls: 'b-classic' };
+    const structLabel = STRUCT_LABELS[s.structure] || s.structure;
+
+    const segsHtml = (s.segments || []).map(seg => {
+      const isBroll = /B-ROLL|CUT TO/i.test(seg.tag);
+      return `<div class="segment">
+        <div class="seg-tag">${seg.tag}</div>
+        <div class="seg-text${isBroll ? ' broll' : ''}">${seg.text}</div>
+      </div>`;
+    }).join('');
+
+    const card = document.createElement('div');
+    card.className = 'script-card';
+    card.innerHTML = `
+      <div class="card-header">
+        <div class="card-meta">
+          <div class="card-title">${s.title || meta.label}</div>
+          <div class="badge-row">
+            <span class="badge ${meta.cls}">${meta.label}</span>
+            <span class="badge b-struct">${structLabel}</span>
+          </div>
+        </div>
+        <button class="copy-btn" onclick="copyCard(this)">Copy</button>
+      </div>
+      <div class="card-body">${segsHtml}</div>`;
+
+    // Save button row
+    const saveRow = document.createElement('div');
+    saveRow.style.cssText = 'padding:0 14px 14px;';
+    saveRow.innerHTML = `<button class="copy-btn" style="width:100%;text-align:center" onclick='saveScript(${JSON.stringify(s)}, "${(property||'').replace(/"/g,'&quot;')}")'>Save script</button>`;
+    card.appendChild(saveRow);
+
+    el.appendChild(card);
+  });
+}
+
+function copyCard(btn) {
+  const card = btn.closest('.script-card');
+  const title = card.querySelector('.card-title')?.textContent || '';
+  const segs = [...card.querySelectorAll('.segment')].map(s => {
+    return `[${s.querySelector('.seg-tag')?.textContent}]\n${s.querySelector('.seg-text')?.textContent}`;
+  }).join('\n\n');
+  navigator.clipboard.writeText(`${title}\n\n${segs}`).then(() => {
+    btn.textContent = 'Copied!';
+    setTimeout(() => btn.textContent = 'Copy', 2000);
+  });
+}
+
+// ── SAVED SCRIPTS ─────────────────────────────────────────────────────────
+function saveScript(script, property) {
+  const saved = JSON.parse(localStorage.getItem('saved_scripts') || '[]');
+  saved.unshift({ script, property, date: new Date().toLocaleDateString() });
+  localStorage.setItem('saved_scripts', JSON.stringify(saved.slice(0, 50)));
+  showToast('Script saved');
+}
+
+function renderSaved() {
+  const saved = JSON.parse(localStorage.getItem('saved_scripts') || '[]');
+  const el = document.getElementById('saved-list');
+
+  if (!saved.length) {
+    el.innerHTML = '<div class="saved-empty">No saved scripts yet.<br>Generate some and tap "Save script".</div>';
+    return;
+  }
+
+  el.innerHTML = saved.map((item, i) => {
+    const meta = STYLE_META[item.script.style] || { label: item.script.style, cls: 'b-classic' };
+    const structLabel = STRUCT_LABELS[item.script.structure] || item.script.structure;
+    return `<div class="saved-card" onclick="viewSaved(${i})">
+      <div class="saved-card-title">${item.script.title || meta.label}</div>
+      <div class="saved-card-meta">${item.property || 'No address'} · ${item.date}</div>
+      <div class="badge-row" style="margin-top:6px">
+        <span class="badge ${meta.cls}">${meta.label}</span>
+        <span class="badge b-struct">${structLabel}</span>
+      </div>
+      <button class="delete-btn" onclick="deleteSaved(event,${i})">Delete</button>
+    </div>`;
+  }).join('');
+}
+
+function viewSaved(i) {
+  const saved = JSON.parse(localStorage.getItem('saved_scripts') || '[]');
+  const { script } = saved[i];
+  const segsHtml = (script.segments || []).map(seg => {
+    const isBroll = /B-ROLL|CUT TO/i.test(seg.tag);
+    return `<div class="segment">
+      <div class="seg-tag">${seg.tag}</div>
+      <div class="seg-text${isBroll ? ' broll' : ''}">${seg.text}</div>
+    </div>`;
+  }).join('');
+
+  document.getElementById('view-sheet-content').innerHTML = `
+    <div class="card-title" style="font-size:16px;margin-bottom:12px">${script.title || ''}</div>
+    ${segsHtml}`;
+  document.getElementById('view-overlay').classList.add('show');
+}
+
+function deleteSaved(e, i) {
+  e.stopPropagation();
+  const saved = JSON.parse(localStorage.getItem('saved_scripts') || '[]');
+  saved.splice(i, 1);
+  localStorage.setItem('saved_scripts', JSON.stringify(saved));
+  renderSaved();
+}
+
+// ── TOAST ─────────────────────────────────────────────────────────────────
+function showToast(msg) {
+  const t = document.createElement('div');
+  t.textContent = msg;
+  t.style.cssText = `position:fixed;bottom:calc(var(--safe-bot,0px) + 80px);left:50%;transform:translateX(-50%);
+    background:var(--text);color:var(--bg);padding:10px 18px;border-radius:999px;
+    font-size:13px;font-weight:500;z-index:200;pointer-events:none;
+    animation:fadeup 0.2s ease;white-space:nowrap`;
+  document.body.appendChild(t);
+  setTimeout(() => t.remove(), 2200);
+}
+
+const style = document.createElement('style');
+style.textContent = `@keyframes fadeup{from{opacity:0;transform:translate(-50%,8px)}to{opacity:1;transform:translate(-50%,0)}}`;
+document.head.appendChild(style);
+
+// ── LOAD ──────────────────────────────────────────────────────────────────
+window.addEventListener('load', () => {
+  const agent = localStorage.getItem('default_agent');
+  if (agent) document.getElementById('f-agent').value = agent;
+  if (!localStorage.getItem('anthropic_key')) {
+    setTimeout(() => {
+      showToast('Tap ⚙️ to add your API key');
+    }, 800);
+  }
+});
+</script>
+</body>
+</html>
