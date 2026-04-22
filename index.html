@@ -1679,15 +1679,8 @@ async function rewriteScript(direction){
       body:JSON.stringify({
         model:'claude-sonnet-4-20250514',
         max_tokens:1500,
-        system:`You rewrite real estate video dialogue. Return ONLY valid JSON array of segment objects. No markdown.
-Format: [{"tag":"...", "type":"agent", "text":"rewritten line", "note":"optional delivery note"}]
-Rules:
-- Rewrite ONLY agent/vo segments — keep the same number of segments and tags
-- Make it ${direction}
-- Stay under ${wl.total} total spoken words
-- Keep the same concept, same structure, same hook idea — just change the execution
-- Natural speech only — how a real person talks`,
-        messages:[{role:'user',content:`Rewrite these lines to be ${direction}:\n\n${currentDialogue}\n\nReturn only the agent segments as JSON array.`}],
+        system:'You rewrite real estate video dialogue. Return ONLY valid JSON array of segment objects. No markdown.\nFormat: [{"tag":"...", "type":"agent", "text":"rewritten line", "note":"optional delivery note"}]\nRules:\n- Rewrite ONLY agent/vo segments - keep the same number of segments and tags\n- Make it '+direction+'\n- Stay under '+wl.total+' total spoken words\n- Keep the same concept, same structure, same hook idea - just change the execution\n- Natural speech only - how a real person talks',
+        messages:[{role:'user',content:'Rewrite these lines to be '+direction+':\n\n'+currentDialogue+'\n\nReturn only the agent segments as JSON array.'}],
       }),
     });
     const data = await res.json();
