@@ -1014,7 +1014,7 @@ ${brief.nervousMode ? '- NERVOUS AGENT MODE: All 4 concepts must use intro-only 
       },
       body:JSON.stringify({
         model:'claude-sonnet-4-20250514',
-        max_tokens:2000,
+        max_tokens:4000,
         system,
         messages:[{role:'user',content:userMsg}],
       }),
@@ -1022,7 +1022,17 @@ ${brief.nervousMode ? '- NERVOUS AGENT MODE: All 4 concepts must use intro-only 
     const data = await res.json();
     if(data.error) throw new Error(data.error.message);
     const raw = data.content.map(i=>i.text||'').join('');
-    lastConcepts = JSON.parse(raw.replace(/```json|```/g,'').trim());
+    const cleaned = raw.replace(/```json|```/g,'').trim();
+    let parsed;
+    try {
+      parsed = JSON.parse(cleaned);
+    } catch(e) {
+      // Try to recover a truncated JSON array by closing it off
+      const recovered = cleaned.replace(/,?\s*\{[^}]*$/, '').replace(/,\s*$/, '') + ']';
+      try { parsed = JSON.parse(recovered); }
+      catch(e2) { throw new Error('Response was cut off — try again or reduce the number of selected options'); }
+    }
+    lastConcepts = parsed;
     renderConcepts(lastConcepts);
   } catch(err){
     document.getElementById('concepts-inner').innerHTML=`
@@ -1145,7 +1155,7 @@ ${brief.nervousMode ? '- NERVOUS AGENT MODE ACTIVE: Agent speaks ONCE only, MAX 
       },
       body:JSON.stringify({
         model:'claude-sonnet-4-20250514',
-        max_tokens:2000,
+        max_tokens:3000,
         system,
         messages:[{role:'user',content:userMsg}],
       }),
@@ -1153,7 +1163,16 @@ ${brief.nervousMode ? '- NERVOUS AGENT MODE ACTIVE: Agent speaks ONCE only, MAX 
     const data = await res.json();
     if(data.error) throw new Error(data.error.message);
     const raw = data.content.map(i=>i.text||'').join('');
-    const script = JSON.parse(raw.replace(/```json|```/g,'').trim());
+    const cleaned = raw.replace(/```json|```/g,'').trim();
+    let script;
+    try {
+      script = JSON.parse(cleaned);
+    } catch(e) {
+      // Try to recover truncated segments array
+      const recovered = cleaned.replace(/,?\s*\{[^}]*$/, '').replace(/,\s*$/, '') + ']}';
+      try { script = JSON.parse(recovered); }
+      catch(e2) { throw new Error('Response cut off — tap try again'); }
+    }
     showScriptSheet(script, concept);
   } catch(err){
     toast('Error: '+( err.message||'try again'));
