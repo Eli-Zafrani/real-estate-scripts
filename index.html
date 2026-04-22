@@ -435,7 +435,7 @@ select option{background:var(--bg3);}
   <div class="hdr">
     <div class="hdr-left">
       <div class="hdr-title">Pick Three <span>Scripts</span></div>
-      <div class="hdr-sub">Real estate video concepts · v11</div>
+      <div class="hdr-sub">Real estate video concepts · v12</div>
     </div>
     <div class="icon-btn" onclick="openSettings()">⚙</div>
   </div>
@@ -1166,7 +1166,8 @@ document.querySelectorAll('#focus-chips .chip, #tone-chips .chip, #struct-chips 
     // Show/hide multi-segment options
     if(c.closest('#struct-chips')){
       const multiOn = !!document.querySelector('#struct-chips .chip.on[data-val="multi"]');
-      document.getElementById('multi-options').style.display = multiOn ? '' : 'none';
+      const mo = document.getElementById('multi-options');
+      if(mo) mo.style.display = multiOn ? 'block' : 'none';
       updateMultiCalc();
     }
   });
@@ -1886,6 +1887,7 @@ window.addEventListener('load',()=>{
   if(agent){ document.getElementById('f-agent1').value=agent; document.getElementById('f-agent1b').value=agent; }
   if(!localStorage.getItem('anthropic_key')) setTimeout(()=>toast('Tap ⚙ to add your API key'),800);
   renderAgentProfileChips();
+  updateMultiCalc();
 });
 </script>
 </body>
