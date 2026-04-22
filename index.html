@@ -1622,21 +1622,35 @@ function showScriptSheet(script, concept){
     + '<div style="padding:0 16px 12px">'
     + '<div style="font-size:10px;font-weight:700;letter-spacing:0.6px;text-transform:uppercase;color:var(--text3);margin-bottom:8px">Rewrite dialogue</div>'
     + '<div style="display:flex;gap:7px;flex-wrap:wrap">'
-    + '<button class="rw-btn" onclick="rewriteScript(\'shorter\')">✂️ Shorter</button>'
-    + '<button class="rw-btn" onclick="rewriteScript(\'punchier\')">⚡ Punchier</button>'
-    + '<button class="rw-btn" onclick="rewriteScript(\'funnier\')">😄 Funnier</button>'
-    + '<button class="rw-btn" onclick="rewriteScript(\'warmer\')">❤️ Warmer</button>'
-    + '<button class="rw-btn" onclick="rewriteScript(\'more cinematic\')">🎬 Cinematic</button>'
-    + '<button class="rw-btn" onclick="rewriteScript(\'more luxury\')">✨ Luxury</button>'
+    + '<button class="rw-btn" data-rw="shorter">✂️ Shorter</button>'
+    + '<button class="rw-btn" data-rw="punchier">⚡ Punchier</button>'
+    + '<button class="rw-btn" data-rw="funnier">😄 Funnier</button>'
+    + '<button class="rw-btn" data-rw="warmer">❤️ Warmer</button>'
+    + '<button class="rw-btn" data-rw="more cinematic">🎬 Cinematic</button>'
+    + '<button class="rw-btn" data-rw="more luxury">✨ Luxury</button>'
     + '</div></div>'
     + '<div class="sv-actions" style="flex-wrap:wrap;gap:8px">'
-    + '<button class="sv-btn primary" onclick="copyScript(this)">Copy</button>'
-    + '<button class="sv-btn secondary" onclick=\'saveScript('+saved.replace(/'/g,"&apos;")+')\'>Save</button>'
-    + '<button class="sv-btn secondary" style="flex:none;width:100%;background:rgba(201,168,76,0.1);color:var(--gold);border-color:rgba(201,168,76,0.3)" onclick="openTP(currentScript)">📱 Teleprompter</button>'
-    + '<button class="sv-btn secondary" style="flex:none;width:100%" onclick="openShotListCurrent()">📋 Shot List</button>'
+    + '<button class="sv-btn primary" data-action="copy">Copy</button>'
+    + '<button class="sv-btn secondary" data-action="save" data-saved="'+saved.replace(/'/g,'&apos;')+'">Save</button>'
+    + '<button class="sv-btn secondary" style="flex:none;width:100%;background:rgba(201,168,76,0.1);color:var(--gold);border-color:rgba(201,168,76,0.3)" data-action="teleprompter">📱 Teleprompter</button>'
+    + '<button class="sv-btn secondary" style="flex:none;width:100%" data-action="shotlist">📋 Shot List</button>'
     + '</div></div>';
 
   document.getElementById('script-overlay').classList.add('show');
+
+  // Event delegation for iOS — inline onclick unreliable on dynamic content
+  const sheet = document.getElementById('script-sheet-body');
+  sheet.onclick = function(e){
+    const btn = e.target.closest('button[data-action]');
+    const rwBtn = e.target.closest('button[data-rw]');
+    if(rwBtn){ rewriteScript(rwBtn.dataset.rw); return; }
+    if(!btn) return;
+    const action = btn.dataset.action;
+    if(action==='copy') copyScript(btn);
+    else if(action==='save') saveScript(btn.dataset.saved);
+    else if(action==='teleprompter') openTP(currentScript);
+    else if(action==='shotlist') openShotListCurrent();
+  };
 }
 
 let currentConcept = null;
@@ -1734,17 +1748,37 @@ function renderSaved(){
     el.innerHTML='<div class="empty"><div class="empty-icon">✦</div><div>No saved scripts yet.<br>Expand a concept and tap Save.</div></div>';
     return;
   }
-  el.innerHTML = saved.map(function(item,i){
+  let html = '';
+  saved.forEach(function(item,i){
     const emoji = (item.concept&&item.concept.emoji)||'🎬';
     const title = (item.script&&item.script.title)||(item.concept&&item.concept.name)||'Script';
     const property = item.property||'No address';
     const date = item.date||'';
-    return '<div class="saved-card" onclick="viewSaved('+i+'">'
+    html += '<div class="saved-card" data-idx="'+i+'">'
       + '<div class="saved-title">'+emoji+' '+title+'</div>'
       + '<div class="saved-meta">'+property+' · '+date+'</div>'
-      + '<button class="saved-del" onclick="deleteSaved(event,'+i+')">Delete</button>'
+      + '<button class="saved-del" data-delidx="'+i+'">Delete</button>'
       + '</div>';
-  }).join('');
+  });
+  el.innerHTML = html;
+
+  // Use event delegation for iOS touch compatibility
+  el.onclick = function(e){
+    const card = e.target.closest('.saved-card');
+    if(!card) return;
+    const delBtn = e.target.closest('.saved-del');
+    if(delBtn){
+      e.stopPropagation();
+      const idx = parseInt(delBtn.dataset.delidx);
+      const s = JSON.parse(localStorage.getItem('saved_scripts')||'[]');
+      s.splice(idx,1);
+      localStorage.setItem('saved_scripts',JSON.stringify(s));
+      renderSaved();
+      return;
+    }
+    const idx = parseInt(card.dataset.idx);
+    viewSaved(idx);
+  };
 }
 
 function viewSaved(i){
