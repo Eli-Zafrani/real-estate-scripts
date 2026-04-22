@@ -296,9 +296,45 @@ select option{background:var(--bg3);}
   cursor:pointer;padding:0;margin-bottom:16px;
 }
 
-.tip-text{font-size:12px;color:var(--text3);line-height:1.5;margin-top:5px;}
+/* ── AGENT PROFILE PICKER ── */
+.agent-profile-scroll{display:flex;gap:7px;overflow-x:auto;flex:1;padding-bottom:2px;scrollbar-width:none;-webkit-overflow-scrolling:touch;}
+.profile-chip{
+  flex-shrink:0;padding:6px 12px;border-radius:999px;
+  border:0.5px solid var(--border2);background:var(--bg2);
+  color:var(--text2);font-size:12px;font-weight:500;cursor:pointer;
+  white-space:nowrap;transition:all 0.12s;
+}
+.profile-chip.active{background:var(--gold);color:#0D0D0D;border-color:var(--gold);font-weight:600;}
+.profile-chip.add-btn{border-style:dashed;color:var(--text3);}
 
-/* ── NERVOUS AGENT PRESET BANNER ── */
+/* ── PROPERTY TYPE PRESETS ── */
+.type-presets{display:flex;flex-wrap:nowrap;overflow-x:auto;gap:7px;margin-bottom:10px;padding-bottom:2px;scrollbar-width:none;-webkit-overflow-scrolling:touch;}
+.type-chip{
+  flex-shrink:0;padding:6px 12px;border-radius:var(--rsm);
+  border:0.5px solid var(--border2);background:var(--bg2);
+  color:var(--text2);font-size:12px;font-weight:500;cursor:pointer;transition:all 0.12s;
+}
+.type-chip.sel{background:var(--bg4);border-color:var(--gold);color:var(--text);}
+
+/* ── COMPETITOR HOOK ── */
+.edge-field{background:rgba(201,168,76,0.06);border:0.5px solid rgba(201,168,76,0.2);border-radius:var(--rsm);padding:12px 14px;}
+.edge-field textarea{background:transparent;border:none;padding:0;font-size:15px;margin-top:4px;}
+.edge-field textarea:focus{background:transparent;border:none;}
+.edge-label{font-size:11px;font-weight:700;letter-spacing:0.5px;text-transform:uppercase;color:var(--gold);}
+
+/* ── REWRITE BUTTONS ── */
+.rw-btn{
+  padding:6px 12px;border-radius:999px;
+  border:0.5px solid var(--border2);background:var(--bg3);
+  color:var(--text2);font-size:12px;font-weight:500;
+  cursor:pointer;font-family:inherit;transition:all 0.12s;
+}
+.rw-btn:active{background:var(--bg4);color:var(--text);}
+.rw-btn:disabled{opacity:0.4;}
+
+.cc-opt{padding:6px 12px;border-radius:999px;border:0.5px solid var(--border2);background:var(--bg3);color:var(--text2);font-size:12px;cursor:pointer;transition:all 0.12s;}
+.cc-opt.sel{background:var(--gold);color:#0D0D0D;border-color:var(--gold);font-weight:600;}
+
 .preset-banner{
   background:rgba(201,168,76,0.1);border:0.5px solid rgba(201,168,76,0.3);
   border-radius:var(--rsm);padding:10px 14px;margin-bottom:18px;
@@ -423,6 +459,19 @@ select option{background:var(--bg3);}
 
       <div class="section">
         <div class="sec-title">Property</div>
+
+        <label class="field-label" style="margin-bottom:6px">Property type</label>
+        <div class="type-presets" id="type-presets">
+          <div class="type-chip" data-type="single_family" onclick="applyTypePreset(this)">🏠 Single Family</div>
+          <div class="type-chip" data-type="condo" onclick="applyTypePreset(this)">🏢 Condo / Townhouse</div>
+          <div class="type-chip" data-type="luxury" onclick="applyTypePreset(this)">✨ Luxury</div>
+          <div class="type-chip" data-type="starter" onclick="applyTypePreset(this)">🔑 Starter Home</div>
+          <div class="type-chip" data-type="fixer" onclick="applyTypePreset(this)">🔨 Fixer Upper</div>
+          <div class="type-chip" data-type="new_construction" onclick="applyTypePreset(this)">🏗 New Construction</div>
+          <div class="type-chip" data-type="land" onclick="applyTypePreset(this)">🌿 Land / Lot</div>
+          <div class="type-chip" data-type="multi_family" onclick="applyTypePreset(this)">🏘 Multi-Family</div>
+        </div>
+
         <div style="margin-bottom:10px">
           <label class="field-label">Address</label>
           <input type="text" id="f-address" placeholder="123 Oak St, Westfield, NJ" autocomplete="off">
@@ -443,7 +492,7 @@ select option{background:var(--bg3);}
             <input type="text" id="f-sqft" placeholder="2,200">
           </div>
           <div>
-            <label class="field-label">Type</label>
+            <label class="field-label">Type / Style</label>
             <input type="text" id="f-type" placeholder="Colonial, ranch, condo…">
           </div>
         </div>
@@ -455,9 +504,15 @@ select option{background:var(--bg3);}
           <label class="field-label">Neighborhood / Location vibe</label>
           <input type="text" id="f-vibe" placeholder="top schools, quiet cul-de-sac, near downtown…">
         </div>
-        <div>
+        <div style="margin-bottom:12px">
           <label class="field-label">Anything extra worth mentioning</label>
           <textarea id="f-extras" rows="2" placeholder="Original hardwoods, 2-car garage, backs up to woods, new roof 2023…"></textarea>
+        </div>
+
+        <div class="edge-field">
+          <div class="edge-label">⚡ What makes this listing stand out vs others on the market?</div>
+          <textarea id="f-edge" rows="2" placeholder="Only pool under $600k in town. Backs to woods but 5 min from highway. Fully renovated — nothing to do. Priced $40k below comps…" style="margin-top:6px"></textarea>
+          <div class="tip-text" style="margin-top:4px">This becomes the anchor of every concept. The more specific, the better.</div>
         </div>
       </div>
 
@@ -465,6 +520,17 @@ select option{background:var(--bg3);}
 
       <div class="section">
         <div class="sec-title">Agent Setup</div>
+
+        <!-- SAVED AGENT PROFILES -->
+        <div id="agent-profiles-row" style="margin-bottom:12px">
+          <label class="field-label" style="margin-bottom:6px">Saved agents</label>
+          <div style="display:flex;gap:8px;align-items:center">
+            <div class="agent-profile-scroll" id="agent-profile-chips"></div>
+            <div class="profile-chip add-btn" onclick="openSaveAgentSheet()" style="flex-shrink:0">+ Save</div>
+          </div>
+          <div class="tip-text" style="margin-top:4px">Tap to load a saved agent. Tap + Save after filling in their info below.</div>
+        </div>
+
         <div class="agent-toggle" id="agent-toggle">
           <div class="atoggle sel" data-val="solo" onclick="setAgentMode('solo')">Solo agent</div>
           <div class="atoggle" data-val="duo" onclick="setAgentMode('duo')">Two-agent team</div>
@@ -482,8 +548,17 @@ select option{background:var(--bg3);}
             </div>
           </div>
           <div style="margin-top:10px">
-            <label class="field-label">Agent personality / vibe (optional)</label>
+            <label class="field-label">Personality / style</label>
             <input type="text" id="f-agent1-vibe" placeholder="funny and relatable, luxury expert, no-nonsense, warm mom energy…">
+          </div>
+          <div style="margin-top:10px">
+            <label class="field-label" style="margin-bottom:6px">Camera comfort</label>
+            <div style="display:flex;gap:6px;flex-wrap:wrap" id="camera-comfort-solo">
+              <div class="cc-opt" data-val="natural" onclick="setCameraComfort('solo',this)">😎 Natural on camera</div>
+              <div class="cc-opt" data-val="ok" onclick="setCameraComfort('solo',this)">🙂 Pretty comfortable</div>
+              <div class="cc-opt sel" data-val="nervous" onclick="setCameraComfort('solo',this)">😬 Gets nervous</div>
+              <div class="cc-opt" data-val="terrible" onclick="setCameraComfort('solo',this)">😰 Terrible on camera</div>
+            </div>
           </div>
         </div>
 
@@ -513,6 +588,14 @@ select option{background:var(--bg3);}
 
       <div class="section">
         <div class="sec-title">Creative Direction</div>
+
+        <label class="field-label" style="margin-bottom:8px">Platform</label>
+        <div class="chips" id="platform-chips" style="margin-bottom:16px">
+          <div class="chip on" data-val="reels">📱 Reels / TikTok</div>
+          <div class="chip" data-val="youtube">▶️ YouTube</div>
+          <div class="chip" data-val="facebook">👥 Facebook</div>
+          <div class="chip" data-val="luxury">🎬 Luxury cinematic</div>
+        </div>
 
         <label class="field-label" style="margin-bottom:8px">Main focus — what should the video sell?</label>
         <div class="chips" id="focus-chips" style="margin-bottom:16px">
@@ -610,7 +693,21 @@ select option{background:var(--bg3);}
   </div>
 </div>
 
+<!-- SAVE AGENT PROFILE SHEET -->
+<div class="overlay" id="save-agent-overlay" onclick="closeOverlayOutside(event,'save-agent-overlay')">
+  <div class="sheet">
+    <div class="sheet-handle"></div>
+    <div class="sheet-title">Save Agent Profile</div>
+    <div class="tip-text" style="margin-bottom:16px">Saves the current agent info so you can load them with one tap next time.</div>
+    <label class="field-label">Profile name (e.g. "Sarah J." or "The Chens")</label>
+    <input type="text" id="save-agent-name" placeholder="Sarah Johnson" style="margin-bottom:16px">
+    <button class="gen-btn" onclick="saveAgentProfile()">Save Profile</button>
+    <button class="gen-btn secondary" onclick="closeOverlay('save-agent-overlay')">Cancel</button>
+  </div>
+</div>
+
 <!-- TELEPROMPTER -->
+
 <div class="tp-overlay" id="tp-overlay">
   <div class="tp-topbar">
     <div class="tp-title" id="tp-title">Teleprompter</div>
@@ -656,6 +753,168 @@ let lastConcepts = [];
 let lastBrief = {};
 let nervousMode = false;
 let currentScript = null;
+let cameraComfort = 'nervous'; // default
+
+// ── PROPERTY TYPE PRESETS ──────────────────────────────────────────────────
+const TYPE_PRESETS = {
+  single_family: {
+    type: 'Single family home',
+    angles: 'backyard, garage, curb appeal, neighborhood feel, space for family',
+    scriptTip: 'Emphasize space, neighborhood, and lifestyle. Families want to picture their life here.'
+  },
+  condo: {
+    type: 'Condo / Townhouse',
+    angles: 'amenities, low maintenance, location, building features, lock-and-leave lifestyle',
+    scriptTip: 'Sell the lifestyle and convenience. Condo buyers want easy living and location.'
+  },
+  luxury: {
+    type: 'Luxury property',
+    angles: 'premium finishes, exclusivity, architectural details, privacy, prestige address',
+    scriptTip: 'Understated confidence. Never list features — evoke feeling. The home speaks for itself.'
+  },
+  starter: {
+    type: 'Starter home',
+    angles: 'value, move-in ready, opportunity to build equity, affordable in great area',
+    scriptTip: 'Speak to first-time buyers. Excitement, not intimidation. This is their moment.'
+  },
+  fixer: {
+    type: 'Fixer upper / as-is',
+    angles: 'potential, location, bones of the house, price per sq ft, investor opportunity',
+    scriptTip: 'Sell the vision, not the current state. "Imagine what this could be."'
+  },
+  new_construction: {
+    type: 'New construction',
+    angles: 'everything brand new, warranties, customization, modern systems, no surprises',
+    scriptTip: 'Emphasize newness, warranties, and peace of mind. Nothing to fix, nothing to worry about.'
+  },
+  land: {
+    type: 'Land / vacant lot',
+    angles: 'build your dream, location, utilities, zoning, surrounding area',
+    scriptTip: 'Pure imagination sell. Paint a picture of what could be built here.'
+  },
+  multi_family: {
+    type: 'Multi-family / investment',
+    angles: 'rental income, cap rate, tenant history, cash flow, appreciation',
+    scriptTip: 'Speak investor language. Numbers, income, ROI. Less emotion, more math.'
+  },
+};
+
+let selectedPropertyType = null;
+
+function applyTypePreset(el){
+  document.querySelectorAll('.type-chip').forEach(c=>c.classList.remove('sel'));
+  el.classList.add('sel');
+  selectedPropertyType = el.dataset.type;
+  const preset = TYPE_PRESETS[selectedPropertyType];
+  if(preset && !document.getElementById('f-type').value){
+    document.getElementById('f-type').value = preset.type;
+  }
+}
+
+// ── CAMERA COMFORT ─────────────────────────────────────────────────────────
+function setCameraComfort(mode, el){
+  const group = document.getElementById(`camera-comfort-${mode}`);
+  group?.querySelectorAll('.cc-opt').forEach(o=>o.classList.remove('sel'));
+  el.classList.add('sel');
+  cameraComfort = el.dataset.val;
+  // Auto-apply nervous preset if terrible/nervous
+  if((el.dataset.val === 'terrible' || el.dataset.val === 'nervous') && !nervousMode){
+    // Suggest but don't force
+    toast('💡 Tip: try Nervous Agent Mode for shorter scripts');
+  }
+}
+
+function getCameraComfortText(){
+  const map = {
+    natural: 'Very comfortable and natural on camera — can handle long lines, improv, multiple takes are easy',
+    ok: 'Pretty comfortable on camera — can handle short paragraphs, some back-and-forth if duo',
+    nervous: 'Gets nervous on camera — keep lines short and simple, one idea per sentence, no more than 2-3 sentences per segment',
+    terrible: 'Very uncomfortable on camera — absolute minimum dialogue, 1 sentence per appearance max, scripts should practically write themselves',
+  };
+  return map[cameraComfort] || map['ok'];
+}
+
+// ── AGENT PROFILES ─────────────────────────────────────────────────────────
+function getAgentProfiles(){ return JSON.parse(localStorage.getItem('agent_profiles')||'[]'); }
+function saveAgentProfiles(p){ localStorage.setItem('agent_profiles', JSON.stringify(p)); }
+
+function renderAgentProfileChips(){
+  const profiles = getAgentProfiles();
+  const container = document.getElementById('agent-profile-chips');
+  if(!container) return;
+  container.innerHTML = profiles.length
+    ? profiles.map((p,i)=>`
+        <div class="profile-chip" data-idx="${i}" onclick="loadAgentProfile(${i})">${p.label}
+          <span onclick="deleteAgentProfile(event,${i})" style="margin-left:6px;opacity:0.5;font-size:11px">✕</span>
+        </div>`).join('')
+    : `<div style="font-size:12px;color:var(--text3);padding:6px 0">No saved agents yet</div>`;
+}
+
+function loadAgentProfile(i){
+  const p = getAgentProfiles()[i];
+  if(!p) return;
+  // Mark active
+  document.querySelectorAll('.profile-chip').forEach(c=>c.classList.remove('active'));
+  document.querySelectorAll('.profile-chip')[i]?.classList.add('active');
+
+  setAgentMode(p.mode||'solo');
+  if(p.mode==='duo'){
+    document.getElementById('f-agent1b').value = p.agent1||'';
+    document.getElementById('f-agent2').value = p.agent2||'';
+    document.getElementById('f-duo-dynamic').value = p.dynamic||'';
+    document.getElementById('f-brokerage2').value = p.brokerage||'';
+  } else {
+    document.getElementById('f-agent1').value = p.agent1||'';
+    document.getElementById('f-brokerage').value = p.brokerage||'';
+    document.getElementById('f-agent1-vibe').value = p.vibe||'';
+  }
+  // Camera comfort
+  cameraComfort = p.cameraComfort||'ok';
+  document.querySelectorAll('#camera-comfort-solo .cc-opt').forEach(el=>{
+    el.classList.toggle('sel', el.dataset.val===cameraComfort);
+  });
+  toast(`Loaded ${p.label}`);
+}
+
+function openSaveAgentSheet(){
+  const name = agentMode==='solo'
+    ? document.getElementById('f-agent1').value
+    : document.getElementById('f-agent1b').value + ' & ' + document.getElementById('f-agent2').value;
+  document.getElementById('save-agent-name').value = name.trim();
+  document.getElementById('save-agent-overlay').classList.add('show');
+}
+
+function saveAgentProfile(){
+  const label = document.getElementById('save-agent-name').value.trim();
+  if(!label){ toast('Enter a name for this profile'); return; }
+
+  const profile = {
+    label,
+    mode: agentMode,
+    agent1: agentMode==='solo' ? document.getElementById('f-agent1').value : document.getElementById('f-agent1b').value,
+    agent2: agentMode==='duo' ? document.getElementById('f-agent2').value : '',
+    brokerage: agentMode==='solo' ? document.getElementById('f-brokerage').value : document.getElementById('f-brokerage2').value,
+    vibe: agentMode==='solo' ? document.getElementById('f-agent1-vibe').value : document.getElementById('f-duo-dynamic').value,
+    dynamic: agentMode==='duo' ? document.getElementById('f-duo-dynamic').value : '',
+    cameraComfort,
+  };
+  const profiles = getAgentProfiles();
+  // Update if same label exists
+  const existing = profiles.findIndex(p=>p.label===label);
+  if(existing>=0) profiles[existing]=profile; else profiles.push(profile);
+  saveAgentProfiles(profiles);
+  renderAgentProfileChips();
+  closeOverlay('save-agent-overlay');
+  toast(`Saved "${label}"`);
+}
+
+function deleteAgentProfile(e, i){
+  e.stopPropagation();
+  const profiles = getAgentProfiles();
+  profiles.splice(i,1);
+  saveAgentProfiles(profiles);
+  renderAgentProfileChips();
+}
 
 // ── NERVOUS AGENT PRESET ───────────────────────────────────────────────────
 function applyNervousPreset(){
@@ -888,7 +1147,48 @@ function getWordLimits(seconds){
   return limits[seconds] || limits[60];
 }
 
-// ── AGENT MODE ────────────────────────────────────────────────────────────
+// ── PLATFORM CHIPS (single-select) ───────────────────────────────────────
+document.querySelectorAll('#platform-chips .chip').forEach(c=>{
+  c.addEventListener('click',()=>{
+    document.querySelectorAll('#platform-chips .chip').forEach(x=>x.classList.remove('on'));
+    c.classList.add('on');
+  });
+});
+function getPlatform(){
+  return document.querySelector('#platform-chips .chip.on')?.dataset?.val || 'reels';
+}
+
+// ── HOOK SCORING ──────────────────────────────────────────────────────────
+async function scoreHooks(concepts, key){
+  if(!concepts.length || !key) return concepts;
+  try {
+    const hooks = concepts.map((c,i)=>({id:c.id, hook:c.hook, name:c.name}));
+    const res = await fetch('https://api.anthropic.com/v1/messages',{
+      method:'POST',
+      headers:{
+        'Content-Type':'application/json',
+        'x-api-key':key,
+        'anthropic-version':'2023-06-01',
+        'anthropic-dangerous-direct-browser-access':'true',
+      },
+      body:JSON.stringify({
+        model:'claude-sonnet-4-20250514',
+        max_tokens:500,
+        system:`You score real estate video hooks. Return ONLY valid JSON array. No markdown.
+Format: [{"id": 1, "score": 4, "reason": "one short sentence why"}]
+Score 1-5: 1=generic/boring, 3=solid, 5=scroll-stopping/memorable. Be honest and critical.`,
+        messages:[{role:'user',content:`Score these hooks:\n${JSON.stringify(hooks)}`}],
+      }),
+    });
+    const data = await res.json();
+    const raw = data.content.map(i=>i.text||'').join('');
+    const scores = JSON.parse(raw.replace(/```json|```/g,'').trim());
+    return concepts.map(c=>{
+      const s = scores.find(x=>x.id===c.id);
+      return s ? {...c, hookScore:s.score, hookReason:s.reason} : c;
+    });
+  } catch(e){ return concepts; }
+}
 function setAgentMode(mode){
   agentMode = mode;
   document.querySelectorAll('#agent-toggle .atoggle').forEach(a=>a.classList.toggle('sel',a.dataset.val===mode));
@@ -918,9 +1218,14 @@ function buildBrief(){
     tone:      getChips('tone-chips'),
     structure: getChips('struct-chips'),
     spark:      get('f-spark'),
+    edge:       get('f-edge'),
     agentMode,
     videoLength: getVideoLength(),
     nervousMode,
+    cameraComfort,
+    propertyType: selectedPropertyType,
+    propertyTypeData: selectedPropertyType ? TYPE_PRESETS[selectedPropertyType] : null,
+    platform:   getPlatform(),
   };
 }
 
@@ -1012,13 +1317,19 @@ Rules:
 - NO generic "welcome to this beautiful home" openers
 - If duo: at least 2 concepts use both agents interestingly
 ${brief.nervousMode ? '- NERVOUS AGENT MODE: Max 2 sentences spoken total. Super short.' : ''}
-- WORD LIMIT: ${wordLimits.note}`;
+- WORD LIMIT: ${wordLimits.note}
+- AGENT CAMERA COMFORT: ${getCameraComfortText()} — every concept must be written to match this comfort level
+${brief.edge ? `- ⚡ LISTING EDGE — anchor EVERY concept around this differentiator: "${brief.edge}"` : ''}
+${brief.propertyTypeData ? `- PROPERTY TYPE: ${brief.propertyTypeData.type}. Best angles: ${brief.propertyTypeData.angles}. Creative direction: ${brief.propertyTypeData.scriptTip}` : ''}
+- PLATFORM: ${brief.platform||'reels'} — ${getPlatformContext(brief.platform||'reels')}`;
 
   const userMsg = (structure) => `Property:\n${propLines}\n\nAgent:\n${agentLines}\n\nCreative direction:
+Platform: ${brief.platform||'reels'}
 Focus: ${brief.focus.join(', ')||'the house'}
 Tone: ${brief.tone.join(', ')||'professional'}
 Video length: ${brief.videoLength} seconds
 ${brief.spark ? `Creative spark: ${brief.spark}` : ''}
+${brief.edge ? `What makes this listing stand out: ${brief.edge}` : ''}
 
 Generate 4 concepts all using "${STRUCT_NAMES[structure]}" structure.`;
 
@@ -1065,10 +1376,24 @@ Generate 4 concepts all using "${STRUCT_NAMES[structure]}" structure.`;
       });
     });
 
-    renderConcepts(results.map(r => ({
-      ...r,
-      concepts: r.concepts // already have updated ids from above
-    })));
+    // Score hooks in background (non-blocking)
+    renderConcepts(results);
+    scoreHooks(lastConcepts, key).then(scored => {
+      lastConcepts = scored;
+      // Update score bars on already-rendered cards
+      scored.forEach(c => {
+        if(!c.hookScore) return;
+        const card = document.getElementById(`cc-${c.id}`);
+        if(!card) return;
+        const scoreEl = card.querySelector('.hook-score-bar');
+        if(scoreEl){
+          scoreEl.innerHTML = `<div style="display:flex;align-items:center;gap:5px;margin-top:4px">
+            ${[1,2,3,4,5].map(i=>`<div style="width:14px;height:3px;border-radius:2px;background:${i<=c.hookScore?'var(--gold)':'var(--bg4)'}"></div>`).join('')}
+            <span style="font-size:10px;color:var(--text3)">${c.hookScore}/5</span>
+          </div>`;
+        }
+      });
+    });
 
   } catch(err){
     document.getElementById('concepts-inner').innerHTML=`
@@ -1109,6 +1434,7 @@ function renderConcepts(groups){
                 <span class="cc-tag ${labelColors[i]||''}">${labels[i]||''}</span>
                 ${(c.tags||[]).map(t=>`<span class="cc-tag">${t}</span>`).join('')}
               </div>
+              <div class="hook-score-bar"></div>
             </div>
           </div>
           <div style="padding:0 16px 12px">
@@ -1173,19 +1499,23 @@ Format:
 
 Rules:
 - Write exactly what the agent says — word for word, natural speech, how a real person talks
-- B-roll segments describe shots and pacing, not spoken words — use [brackets] for action notes
+- B-roll segments must be EMOTIONALLY MATCHED to the dialogue that precedes them — not generic room shots. If the agent says "this kitchen is made for memories," b-roll = "lifestyle: family laughing while cooking, steam rising, golden hour light through window." Think like a director.
+- Each b-roll segment must include: shot type, subject/action, emotional feel, and timing hint (e.g. "3-4 sec slow push")
 - Director notes go in the note field — keep them short and practical
 - Match the tone and structure of the concept exactly
 - If it's a duo, write lines for BOTH agents — label them by name in the text
-- If it's themed or uses a motif, carry it through the whole script
+- If it's themed or uses a motif, carry it through the whole script consistently
 - Segments: intro_only=2, bookend=3, multi=4-6, voiceover=3-4
 - No generic filler. Every line should earn its place.
 - HARD WORD COUNT RULE: ${wordLimits.note}
 - Per agent segment: MAX ${wordLimits.perSegment} spoken words. Count them. Cut ruthlessly if over.
-- Think of it like Twitter for video — every word costs screen time. Make them count.
-${brief.nervousMode ? '- NERVOUS AGENT MODE ACTIVE: Agent speaks ONCE only, MAX 2 sentences, MAX 20 words total. That is a hard ceiling. They can barely remember their name on camera.' : ''}` ;
+- AGENT CAMERA COMFORT: ${getCameraComfortText()} — the actual dialogue must reflect this
+${brief.nervousMode ? '- NERVOUS AGENT MODE ACTIVE: Agent speaks ONCE only, MAX 2 sentences, MAX 20 words total. Hard ceiling.' : ''}
+${brief.edge ? `- ⚡ LISTING EDGE: "${brief.edge}" — this must come through clearly somewhere in the script` : ''}
+${brief.propertyTypeData ? `- PROPERTY TYPE: ${brief.propertyTypeData.type}. ${brief.propertyTypeData.scriptTip}` : ''}
+- PLATFORM: ${brief.platform||'reels'} — ${getPlatformContext(brief.platform||'reels')}`;
 
-  const userMsg = `Property:\n${propLines}\n\nAgent: ${agentInfo}\n\nTarget length: ${brief.videoLength || 60} seconds (STRICT — max ${wordLimits.total} spoken words total)\n\nConcept to expand:\nName: ${concept.name}\nPitch: ${concept.pitch}\nTone: ${concept.tone}\nStructure: ${concept.structure}\nOpening hook: "${concept.hook}"\n\nWrite the full script. Count your words. Stay under the limit.`;
+  const userMsg = `Property:\n${propLines}\n\nAgent: ${agentInfo}\n\nPlatform: ${brief.platform||'reels'}\nTarget length: ${brief.videoLength || 60} seconds (STRICT — max ${wordLimits.total} spoken words total)\n${brief.edge ? `\nKey differentiator: ${brief.edge}` : ''}\n\nConcept to expand:\nName: ${concept.name}\nPitch: ${concept.pitch}\nTone: ${concept.tone}\nStructure: ${concept.structure}\nOpening hook: "${concept.hook}"\n\nWrite the full script. Count your words. Stay under the limit.`;
 
   try {
     const res = await fetch('https://api.anthropic.com/v1/messages',{
@@ -1227,7 +1557,6 @@ ${brief.nervousMode ? '- NERVOUS AGENT MODE ACTIVE: Agent speaks ONCE only, MAX 
 
 // ── SHOW SCRIPT SHEET ─────────────────────────────────────────────────────
 function showScriptSheet(script, concept){
-  // Count spoken words
   const spokenWords = (script.segments||[])
     .filter(s=>s.type==='agent'||s.type==='vo')
     .reduce((acc,s)=>acc+(s.text||'').split(/\s+/).filter(Boolean).length,0);
@@ -1237,28 +1566,53 @@ function showScriptSheet(script, concept){
   const wordCountHtml = `<div style="margin-top:8px;font-size:11px;font-weight:600;color:${overLimit?'#C0392B':'var(--gold)'}">
     ${spokenWords} spoken words · target ${videoLen}s (max ${wl.total})${overLimit?' — over limit ⚠️':''}
   </div>`;
+
   const segsHtml = (script.segments||[]).map(seg=>{
     const isBroll = seg.type==='broll';
     const isVo    = seg.type==='vo';
-    const cls     = isBroll||isVo ? 'broll-seg' : 'agent-seg';
+    const cls     = isBroll ? 'broll-seg' : 'agent-seg';
     return `<div class="seg ${cls}">
       <div class="seg-tag">${seg.tag}</div>
       <div class="seg-text${isBroll||isVo?' broll':''}">${seg.text}</div>
+      ${seg.timing?`<div class="seg-note">⏱ ${seg.timing}</div>`:''}
       ${seg.note?`<div class="seg-note">↳ ${seg.note}</div>`:''}
     </div>`;
   }).join('');
 
+  const hookScore = concept.hookScore;
+  const hookScoreHtml = hookScore ? `
+    <div style="display:flex;align-items:center;gap:8px;margin-top:6px">
+      <div style="font-size:10px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:0.5px">Hook strength</div>
+      <div style="display:flex;gap:3px">${[1,2,3,4,5].map(i=>`<div style="width:16px;height:4px;border-radius:2px;background:${i<=hookScore?'var(--gold)':'var(--bg4)'}"></div>`).join('')}</div>
+      <div style="font-size:11px;color:var(--text3)">${hookScore}/5</div>
+    </div>` : '';
+
   const saved = JSON.stringify({script, concept, property: lastBrief.address||lastBrief.features, date: new Date().toLocaleDateString()});
   currentScript = script;
+  currentConcept = concept;
 
   document.getElementById('script-sheet-body').innerHTML = `
     <div class="script-view" style="border:none;background:transparent">
       <div class="sv-header">
         <div class="sv-title">${concept.emoji||'🎬'} ${script.title||concept.name}</div>
         <div class="sv-pitch">${script.pitch||concept.pitch}</div>
+        ${hookScoreHtml}
         ${wordCountHtml}
       </div>
       <div class="sv-body">${segsHtml}</div>
+
+      <div style="padding:0 16px 12px">
+        <div style="font-size:10px;font-weight:700;letter-spacing:0.6px;text-transform:uppercase;color:var(--text3);margin-bottom:8px">Rewrite dialogue</div>
+        <div style="display:flex;gap:7px;flex-wrap:wrap">
+          <button class="rw-btn" onclick="rewriteScript('shorter')">✂️ Shorter</button>
+          <button class="rw-btn" onclick="rewriteScript('punchier')">⚡ Punchier</button>
+          <button class="rw-btn" onclick="rewriteScript('funnier')">😄 Funnier</button>
+          <button class="rw-btn" onclick="rewriteScript('warmer')">❤️ Warmer</button>
+          <button class="rw-btn" onclick="rewriteScript('more cinematic')">🎬 Cinematic</button>
+          <button class="rw-btn" onclick="rewriteScript('more luxury')">✨ Luxury</button>
+        </div>
+      </div>
+
       <div class="sv-actions" style="flex-wrap:wrap;gap:8px">
         <button class="sv-btn primary" onclick="copyScript(this)">Copy</button>
         <button class="sv-btn secondary" onclick='saveScript(${saved.replace(/'/g,"&apos;")})'>Save</button>
@@ -1270,7 +1624,75 @@ function showScriptSheet(script, concept){
   document.getElementById('script-overlay').classList.add('show');
 }
 
-function copyScript(btn){
+let currentConcept = null;
+
+// ── PLATFORM CONTEXT ──────────────────────────────────────────────────────
+function getPlatformContext(platform){
+  const map = {
+    reels: 'Instagram Reels / TikTok — hook in first 2 seconds, fast cuts, vertical 9:16, high energy, text overlays expected, thumb-stopping opener is everything',
+    youtube: 'YouTube — longer attention span, can build narrative, horizontal 16:9, intro can be 5-8 sec, more room for storytelling and agent personality',
+    facebook: 'Facebook — slightly older demographic, can be slightly slower paced, works horizontal, share-friendly content, community feel',
+    luxury: 'Luxury cinematic — slow, deliberate, no rushing, wide establishing shots, let silence work, music-driven, feels like a film trailer not a social post',
+  };
+  return map[platform]||map['reels'];
+}
+
+// ── REWRITE SCRIPT ─────────────────────────────────────────────────────────
+async function rewriteScript(direction){
+  const key = localStorage.getItem('anthropic_key')||'';
+  if(!key||!currentScript) return;
+
+  const btns = document.querySelectorAll('.rw-btn');
+  btns.forEach(b=>{ b.disabled=true; b.style.opacity='0.4'; });
+
+  const activeBtn = [...btns].find(b=>b.textContent.toLowerCase().includes(direction.split(' ')[0].replace('✂️','').replace('⚡','').replace('😄','').replace('❤️','').replace('🎬','').replace('✨','').trim().toLowerCase()));
+  if(activeBtn){ activeBtn.textContent = '…'; }
+
+  const agentSegs = currentScript.segments.filter(s=>s.type==='agent'||s.type==='vo');
+  const currentDialogue = agentSegs.map(s=>`[${s.tag}]: ${s.text}`).join('\n');
+  const wl = getWordLimits(lastBrief.videoLength||60);
+
+  try {
+    const res = await fetch('https://api.anthropic.com/v1/messages',{
+      method:'POST',
+      headers:{
+        'Content-Type':'application/json',
+        'x-api-key':key,
+        'anthropic-version':'2023-06-01',
+        'anthropic-dangerous-direct-browser-access':'true',
+      },
+      body:JSON.stringify({
+        model:'claude-sonnet-4-20250514',
+        max_tokens:1500,
+        system:`You rewrite real estate video dialogue. Return ONLY valid JSON array of segment objects. No markdown.
+Format: [{"tag":"...", "type":"agent", "text":"rewritten line", "note":"optional delivery note"}]
+Rules:
+- Rewrite ONLY agent/vo segments — keep the same number of segments and tags
+- Make it ${direction}
+- Stay under ${wl.total} total spoken words
+- Keep the same concept, same structure, same hook idea — just change the execution
+- Natural speech only — how a real person talks`,
+        messages:[{role:'user',content:`Rewrite these lines to be ${direction}:\n\n${currentDialogue}\n\nReturn only the agent segments as JSON array.`}],
+      }),
+    });
+    const data = await res.json();
+    if(data.error) throw new Error(data.error.message);
+    const raw = data.content.map(i=>i.text||'').join('');
+    const newSegs = JSON.parse(raw.replace(/```json|```/g,'').trim());
+
+    // Merge back into script
+    const updated = {...currentScript, segments: currentScript.segments.map(seg=>{
+      if(seg.type==='broll') return seg;
+      const match = newSegs.find(n=>n.tag===seg.tag);
+      return match ? {...seg, text:match.text, note:match.note||seg.note} : seg;
+    })};
+    showScriptSheet(updated, currentConcept||{name:currentScript.title,emoji:'🎬',pitch:''});
+    toast(`Rewritten: ${direction}`);
+  } catch(err){
+    toast('Rewrite failed — try again');
+    btns.forEach(b=>{ b.disabled=false; b.style.opacity=''; });
+  }
+}
   const segs = [...document.querySelectorAll('#script-sheet-body .seg')].map(s=>{
     const tag  = s.querySelector('.seg-tag')?.textContent||'';
     const text = s.querySelector('.seg-text')?.textContent||'';
@@ -1337,6 +1759,7 @@ window.addEventListener('load',()=>{
   const agent = localStorage.getItem('default_agent');
   if(agent){ document.getElementById('f-agent1').value=agent; document.getElementById('f-agent1b').value=agent; }
   if(!localStorage.getItem('anthropic_key')) setTimeout(()=>toast('Tap ⚙ to add your API key'),800);
+  renderAgentProfileChips();
 });
 </script>
 </body>
