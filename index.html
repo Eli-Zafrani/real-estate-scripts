@@ -925,12 +925,27 @@ function buildBrief(){
 }
 
 // ── GENERATE CONCEPTS ─────────────────────────────────────────────────────
+const STRUCT_NAMES = {
+  intro_only: 'Intro Only',
+  bookend:    'Bookend',
+  multi:      'Multi-Segment',
+  voiceover:  'Voiceover',
+};
+const STRUCT_DESC = {
+  intro_only: 'Agent speaks ONCE at the very start — 1 short appearance, then pure b-roll takes over for the rest of the video.',
+  bookend:    'Agent opens the video, b-roll fills the middle, agent closes with a CTA. Three parts: open → footage → close.',
+  multi:      'Agent appears 3-4 times at different locations/rooms throughout the video, each time highlighting a different feature.',
+  voiceover:  'No agent on camera at all. Narration plays over b-roll — great for camera-shy agents or cinematic edits.',
+};
+
 async function generateConcepts(){
   const key = localStorage.getItem('anthropic_key')||'';
   if(!key){ openSettings(); toast('Add your API key first'); return; }
 
   const brief = buildBrief();
   if(!brief.features && !brief.address){ toast('Enter at least an address or features'); return; }
+
+  const structures = brief.structure.length ? brief.structure : ['intro_only'];
 
   lastBrief = brief;
 
@@ -942,7 +957,7 @@ async function generateConcepts(){
     <div class="loading">
       <div class="spinner"></div>
       <div class="loading-label">Developing concepts…</div>
-      <div class="loading-sub">Reading the property.<br>Coming up with angles.</div>
+      <div class="loading-sub">Generating ${structures.length * 4} concepts<br>across ${structures.length} structure${structures.length>1?'s':''}.</div>
     </div>`;
 
   const propLines = [
@@ -965,17 +980,10 @@ async function generateConcepts(){
   ].filter(Boolean).join('\n');
 
   const wordLimits = getWordLimits(brief.videoLength);
-  const creativeLines = [
-    brief.focus.length    && `Sell: ${brief.focus.join(', ')}`,
-    brief.tone.length     && `Tone: ${brief.tone.join(', ')}`,
-    brief.structure.length && `Structure: ${brief.structure.join(', ')}`,
-    `Target video length: ${brief.videoLength} seconds`,
-    brief.spark           && `Creative spark / direction: ${brief.spark}`,
-  ].filter(Boolean).join('\n');
 
-  const system = `You are a senior real estate video creative director. You work like a film director mixed with a copywriter — you pitch bold, specific, memorable video concepts, not generic scripts.
+  const buildSystem = (structure) => `You are a senior real estate video creative director. You pitch bold, specific, memorable video concepts.
 
-Return ONLY valid JSON. No markdown, no backticks, no extra text.
+Return ONLY valid JSON array. No markdown, no backticks, no extra text.
 
 Format:
 [
@@ -983,62 +991,85 @@ Format:
     "id": 1,
     "emoji": "🎬",
     "name": "Concept name (punchy, 3-5 words)",
-    "pitch": "One sentence that sells the concept — what makes it different and why it'll work",
-    "tags": ["tag1","tag2","tag3"],
-    "structure": "intro_only|bookend|multi|voiceover",
-    "tone": "the tone in 2-3 words",
-    "hook": "The exact opening line or moment — word for word what the agent says or what happens on screen"
+    "pitch": "One sentence — what makes it different and why it works",
+    "tags": ["tag1","tag2"],
+    "structure": "${structure}",
+    "tone": "tone in 2-3 words",
+    "hook": "Exact opening line word-for-word — what the agent says or what happens on screen"
   }
 ]
 
+Structure for ALL 4 concepts: ${structure} — ${STRUCT_DESC[structure]}
+
 Rules:
-- Generate exactly 4 concepts
-- Concept 1: Safe and polished (professional, clean, works for any client)
-- Concept 2: Creative but sellable (unexpected angle, still approachable for most agents)
-- Concept 3: Bold/viral potential (high personality, social-first, could blow up)
-- Concept 4: Wildcard — something genuinely surprising or thematic (a running motif, a pun series, a cinematic device, a twist)
-- Each concept must feel DISTINCT — different energy, different structure, different opening
-- Tags should be short: "bookend", "duo", "voiceover", "funny", "cinematic", "emotional", etc.
-- If it's a duo, at least 2 concepts should use both agents in interesting ways
-- The hook field must be specific and word-for-word ready — not a description, the actual line
-- Use the creative spark if provided — it should influence at least one concept heavily
-- DO NOT produce generic "welcome to this beautiful home" concepts — every concept needs an angle
-- CRITICAL: The target video is ${brief.videoLength} seconds. The hook you write must fit that length — short, punchy, not a monologue
-${brief.nervousMode ? '- NERVOUS AGENT MODE: All 4 concepts must use intro-only structure with max 2 sentences spoken. The agent barely has to remember anything. Super simple, super short.' : ''}` ;
+- Generate exactly 4 concepts, ALL using ${structure} structure
+- Concept 1: Safe and polished (professional, works for any agent)
+- Concept 2: Creative but sellable (unexpected angle, still approachable)
+- Concept 3: Bold/viral potential (high personality, social-first)
+- Concept 4: Wildcard — thematic, surprising, a motif or twist
+- Each concept must feel DISTINCT — different energy, different angle
+- Hook must be word-for-word ready, fits ${brief.videoLength} seconds
+- NO generic "welcome to this beautiful home" openers
+- If duo: at least 2 concepts use both agents interestingly
+${brief.nervousMode ? '- NERVOUS AGENT MODE: Max 2 sentences spoken total. Super short.' : ''}
+- WORD LIMIT: ${wordLimits.note}`;
 
-  const userMsg = `Property:\n${propLines}\n\nAgent:\n${agentLines}\n\nCreative direction:\n${creativeLines}`;
+  const userMsg = (structure) => `Property:\n${propLines}\n\nAgent:\n${agentLines}\n\nCreative direction:
+Focus: ${brief.focus.join(', ')||'the house'}
+Tone: ${brief.tone.join(', ')||'professional'}
+Video length: ${brief.videoLength} seconds
+${brief.spark ? `Creative spark: ${brief.spark}` : ''}
 
+Generate 4 concepts all using "${STRUCT_NAMES[structure]}" structure.`;
+
+  // Fire all structure calls in parallel
   try {
-    const res = await fetch('https://api.anthropic.com/v1/messages',{
-      method:'POST',
-      headers:{
-        'Content-Type':'application/json',
-        'x-api-key':key,
-        'anthropic-version':'2023-06-01',
-        'anthropic-dangerous-direct-browser-access':'true',
-      },
-      body:JSON.stringify({
-        model:'claude-sonnet-4-20250514',
-        max_tokens:4000,
-        system,
-        messages:[{role:'user',content:userMsg}],
-      }),
+    const results = await Promise.all(structures.map(async (struct) => {
+      const res = await fetch('https://api.anthropic.com/v1/messages',{
+        method:'POST',
+        headers:{
+          'Content-Type':'application/json',
+          'x-api-key':key,
+          'anthropic-version':'2023-06-01',
+          'anthropic-dangerous-direct-browser-access':'true',
+        },
+        body:JSON.stringify({
+          model:'claude-sonnet-4-20250514',
+          max_tokens:3000,
+          system: buildSystem(struct),
+          messages:[{role:'user',content:userMsg(struct)}],
+        }),
+      });
+      const data = await res.json();
+      if(data.error) throw new Error(data.error.message);
+      const raw = data.content.map(i=>i.text||'').join('');
+      const cleaned = raw.replace(/```json|```/g,'').trim();
+      try {
+        const concepts = JSON.parse(cleaned);
+        return { structure: struct, concepts };
+      } catch(e) {
+        const recovered = cleaned.replace(/,?\s*\{[^}]*$/, '').replace(/,\s*$/,'') + ']';
+        try { return { structure: struct, concepts: JSON.parse(recovered) }; }
+        catch(e2) { return { structure: struct, concepts: [] }; }
+      }
+    }));
+
+    // Flatten with unique IDs and store
+    let idCounter = 1;
+    lastConcepts = [];
+    results.forEach(r => {
+      r.concepts.forEach(c => {
+        c.id = idCounter++;
+        c.structure = r.structure;
+        lastConcepts.push(c);
+      });
     });
-    const data = await res.json();
-    if(data.error) throw new Error(data.error.message);
-    const raw = data.content.map(i=>i.text||'').join('');
-    const cleaned = raw.replace(/```json|```/g,'').trim();
-    let parsed;
-    try {
-      parsed = JSON.parse(cleaned);
-    } catch(e) {
-      // Try to recover a truncated JSON array by closing it off
-      const recovered = cleaned.replace(/,?\s*\{[^}]*$/, '').replace(/,\s*$/, '') + ']';
-      try { parsed = JSON.parse(recovered); }
-      catch(e2) { throw new Error('Response was cut off — try again or reduce the number of selected options'); }
-    }
-    lastConcepts = parsed;
-    renderConcepts(lastConcepts);
+
+    renderConcepts(results.map(r => ({
+      ...r,
+      concepts: r.concepts // already have updated ids from above
+    })));
+
   } catch(err){
     document.getElementById('concepts-inner').innerHTML=`
       <div class="empty">
@@ -1051,39 +1082,46 @@ ${brief.nervousMode ? '- NERVOUS AGENT MODE: All 4 concepts must use intro-only 
 }
 
 // ── RENDER CONCEPTS ───────────────────────────────────────────────────────
-function renderConcepts(concepts){
+function renderConcepts(groups){
   const el = document.getElementById('concepts-inner');
   const labels = ['Safe pick','Creative','Viral potential','Wildcard ✦'];
   const labelColors = ['','','gold','gold'];
+  const totalConcepts = groups.reduce((a,g)=>a+g.concepts.length,0);
 
-  el.innerHTML = `<div style="margin-bottom:16px">
-    <div style="font-size:13px;color:var(--text2);line-height:1.5">
-      Tap <b style="color:var(--gold)">Expand into full script</b> on any concept to get the complete camera-ready script.
-    </div>
-  </div>
-  <div class="concepts">${concepts.map((c,i)=>`
-    <div class="concept-card" id="cc-${c.id}">
-      <div class="cc-header">
-        <div class="cc-emoji">${c.emoji||'🎬'}</div>
-        <div class="cc-meta">
-          <div class="cc-name">${c.name}</div>
-          <div class="cc-pitch">${c.pitch}</div>
-          <div class="cc-tags">
-            <span class="cc-tag ${labelColors[i]}">${labels[i]}</span>
-            ${(c.tags||[]).map(t=>`<span class="cc-tag">${t}</span>`).join('')}
+  el.innerHTML = `<div style="margin-bottom:16px;font-size:13px;color:var(--text2);line-height:1.5">
+    ${totalConcepts} concepts generated. Tap <b style="color:var(--gold)">Expand into full script</b> on any to get the camera-ready script.
+  </div>` + groups.map(group => `
+    <div style="margin-bottom:28px">
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px">
+        <div style="font-size:11px;font-weight:700;letter-spacing:0.8px;text-transform:uppercase;color:var(--gold)">${STRUCT_NAMES[group.structure]||group.structure}</div>
+        <div style="flex:1;height:0.5px;background:var(--border)"></div>
+        <div style="font-size:11px;color:var(--text3)">${STRUCT_DESC[group.structure]?.split('—')[0]?.trim()||''}</div>
+      </div>
+      <div class="concepts">
+        ${group.concepts.map((c,i)=>`
+        <div class="concept-card" id="cc-${c.id}">
+          <div class="cc-header">
+            <div class="cc-emoji">${c.emoji||'🎬'}</div>
+            <div class="cc-meta">
+              <div class="cc-name">${c.name}</div>
+              <div class="cc-pitch">${c.pitch}</div>
+              <div class="cc-tags">
+                <span class="cc-tag ${labelColors[i]||''}">${labels[i]||''}</span>
+                ${(c.tags||[]).map(t=>`<span class="cc-tag">${t}</span>`).join('')}
+              </div>
+            </div>
           </div>
-        </div>
+          <div style="padding:0 16px 12px">
+            <div style="font-size:10px;font-weight:700;letter-spacing:0.7px;text-transform:uppercase;color:var(--text3);margin-bottom:5px">Opening hook</div>
+            <div style="font-size:13px;color:var(--text);line-height:1.6;font-style:italic">"${c.hook}"</div>
+          </div>
+          <button class="cc-expand-btn" onclick="expandConcept(${c.id})">
+            <span>Expand into full script</span>
+            <span>→</span>
+          </button>
+        </div>`).join('')}
       </div>
-      <div style="padding:0 16px 12px">
-        <div style="font-size:10px;font-weight:700;letter-spacing:0.7px;text-transform:uppercase;color:var(--text3);margin-bottom:5px">Opening hook</div>
-        <div style="font-size:13px;color:var(--text);line-height:1.6;font-style:italic">"${c.hook}"</div>
-      </div>
-      <button class="cc-expand-btn" onclick="expandConcept(${c.id})">
-        <span>Expand into full script</span>
-        <span>→</span>
-      </button>
-    </div>`).join('')}
-  </div>`;
+    </div>`).join('');
 }
 
 // ── EXPAND CONCEPT → FULL SCRIPT ──────────────────────────────────────────
