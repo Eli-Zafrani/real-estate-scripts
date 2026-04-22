@@ -777,6 +777,11 @@ function initSpeedSlider(){
 // ── SHOT LIST ─────────────────────────────────────────────────────────────
 let shotChecks = {};
 
+function openShotListCurrent(){
+  if(!currentScript){ toast('No script loaded'); return; }
+  openShotList(currentScript);
+}
+
 function openShotList(script, property){
   // Generate shots from b-roll segments + always-needed shots
   const brollSegs = (script.segments||[]).filter(s=>s.type==='broll');
@@ -1220,7 +1225,7 @@ function showScriptSheet(script, concept){
         <button class="sv-btn primary" onclick="copyScript(this)">Copy</button>
         <button class="sv-btn secondary" onclick='saveScript(${saved.replace(/'/g,"&apos;")})'>Save</button>
         <button class="sv-btn secondary" style="flex:none;width:100%;background:rgba(201,168,76,0.1);color:var(--gold);border-color:rgba(201,168,76,0.3)" onclick="openTP(currentScript)">📱 Teleprompter</button>
-        <button class="sv-btn secondary" style="flex:none;width:100%" onclick="openShotList(currentScript)">📋 Shot List</button>
+        <button class="sv-btn secondary" style="flex:none;width:100%" onclick="openShotListCurrent()">📋 Shot List</button>
       </div>
     </div>`;
 
