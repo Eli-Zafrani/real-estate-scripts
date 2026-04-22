@@ -297,6 +297,97 @@ select option{background:var(--bg3);}
 }
 
 .tip-text{font-size:12px;color:var(--text3);line-height:1.5;margin-top:5px;}
+
+/* ── NERVOUS AGENT PRESET BANNER ── */
+.preset-banner{
+  background:rgba(201,168,76,0.1);border:0.5px solid rgba(201,168,76,0.3);
+  border-radius:var(--rsm);padding:10px 14px;margin-bottom:18px;
+  display:flex;align-items:center;justify-content:space-between;gap:10px;
+}
+.preset-label{font-size:13px;font-weight:600;color:var(--gold);}
+.preset-sub{font-size:11px;color:var(--text3);margin-top:2px;}
+.preset-clear{font-size:12px;color:var(--text3);background:none;border:none;font-family:inherit;cursor:pointer;padding:0;}
+
+/* ── SHOT LIST ── */
+.shot-list{display:flex;flex-direction:column;gap:6px;margin-top:4px;}
+.shot-item{
+  display:flex;align-items:flex-start;gap:10px;
+  background:var(--bg3);border-radius:var(--rsm);padding:10px 12px;
+}
+.shot-check{
+  width:20px;height:20px;border-radius:6px;
+  border:1.5px solid var(--border2);background:var(--bg2);
+  flex-shrink:0;cursor:pointer;display:flex;align-items:center;justify-content:center;
+  font-size:12px;transition:all 0.15s;margin-top:1px;
+}
+.shot-check.done{background:var(--gold);border-color:var(--gold);color:#0D0D0D;}
+.shot-text{font-size:13px;color:var(--text2);line-height:1.5;flex:1;}
+.shot-text.done{text-decoration:line-through;color:var(--text3);}
+.shot-category{font-size:10px;font-weight:700;letter-spacing:0.6px;color:var(--text3);text-transform:uppercase;margin:12px 0 6px;}
+
+/* ── TELEPROMPTER ── */
+.tp-overlay{
+  position:fixed;inset:0;z-index:200;
+  background:#000;
+  display:flex;flex-direction:column;
+  opacity:0;pointer-events:none;transition:opacity 0.2s;
+}
+.tp-overlay.show{opacity:1;pointer-events:all;}
+.tp-topbar{
+  padding:calc(var(--safe-top) + 12px) 20px 12px;
+  display:flex;align-items:center;justify-content:space-between;
+  border-bottom:0.5px solid #222;flex-shrink:0;
+}
+.tp-close{
+  background:none;border:0.5px solid #333;border-radius:999px;
+  color:#888;font-family:inherit;font-size:13px;font-weight:500;
+  padding:6px 14px;cursor:pointer;
+}
+.tp-title{font-size:13px;color:#555;font-weight:500;}
+.tp-scroll{
+  flex:1;overflow-y:auto;padding:32px 24px;
+  -webkit-overflow-scrolling:touch;
+}
+.tp-text{
+  font-size:52px;font-weight:700;line-height:1.25;
+  color:#fff;letter-spacing:-0.5px;
+  /* Mirror horizontally so agent sees it right-way round in camera */
+}
+.tp-text.mirror{transform:scaleX(-1);}
+.tp-segment-break{
+  width:60px;height:2px;background:#333;
+  margin:32px auto;border-radius:2px;
+}
+.tp-controls{
+  padding:16px 20px calc(var(--safe-bot) + 16px);
+  border-top:0.5px solid #222;
+  display:flex;flex-direction:column;gap:12px;flex-shrink:0;
+  background:#000;
+}
+.tp-speed-row{display:flex;align-items:center;gap:12px;}
+.tp-speed-label{font-size:12px;color:#555;width:48px;flex-shrink:0;}
+.tp-speed-track{
+  flex:1;height:4px;background:#222;border-radius:2px;
+  position:relative;cursor:pointer;
+}
+.tp-speed-thumb{
+  width:18px;height:18px;background:var(--gold);border-radius:50%;
+  position:absolute;top:50%;transform:translate(-50%,-50%);
+  cursor:grab;transition:left 0.05s;
+}
+.tp-btn-row{display:flex;gap:8px;}
+.tp-btn{
+  flex:1;padding:12px;border-radius:var(--rsm);
+  font-family:inherit;font-size:13px;font-weight:600;
+  cursor:pointer;border:none;transition:opacity 0.15s;
+}
+.tp-btn.start{background:var(--gold);color:#000;}
+.tp-btn.pause{background:#222;color:#fff;}
+.tp-btn.mirror-btn{background:#1a1a1a;color:#888;font-size:12px;}
+.tp-btn:active{opacity:0.7;}
+.tp-progress{
+  font-size:11px;color:#444;text-align:center;
+}
 </style>
 </head>
 <body>
@@ -320,6 +411,15 @@ select option{background:var(--bg3);}
 
     <!-- ── BRIEF TAB ── -->
     <div id="view-brief">
+
+      <!-- NERVOUS AGENT PRESET BANNER (hidden by default) -->
+      <div class="preset-banner" id="preset-banner" style="display:none">
+        <div>
+          <div class="preset-label">⚡ Nervous Agent Mode</div>
+          <div class="preset-sub">30 sec · intro only · max 2 sentences</div>
+        </div>
+        <button class="preset-clear" onclick="clearPreset()">Clear ✕</button>
+      </div>
 
       <div class="section">
         <div class="sec-title">Property</div>
@@ -442,12 +542,23 @@ select option{background:var(--bg3);}
           <div class="chip" data-val="voiceover">Voiceover</div>
         </div>
 
+        <label class="field-label" style="margin-bottom:8px">Target video length</label>
+        <div class="chips" id="length-chips" style="margin-bottom:6px">
+          <div class="chip" data-val="30">30 sec</div>
+          <div class="chip on" data-val="60">60 sec</div>
+          <div class="chip" data-val="90">90 sec</div>
+          <div class="chip" data-val="120">2 min</div>
+          <div class="chip" data-val="180">3 min</div>
+        </div>
+        <div class="tip-text" style="margin-bottom:16px">Controls how many words agents actually speak. 60 sec ≈ 120 spoken words total.</div>
+
         <label class="field-label" style="margin-bottom:8px">Creative spark (optional but powerful)</label>
         <textarea id="f-spark" rows="2" placeholder="Something with a theme, like the agent making puns about the pool. Or two agents debating who loves the kitchen more. Or open with the view from the backyard. Anything goes."></textarea>
         <div class="tip-text">This is your creative brief. The more specific, the better the concepts.</div>
       </div>
 
       <button class="gen-btn" id="gen-btn" onclick="generateConcepts()">Generate Concepts →</button>
+      <button class="gen-btn secondary" onclick="applyNervousPreset()" id="nervous-btn">⚡ Nervous Agent Mode</button>
     </div>
 
     <!-- ── CONCEPTS TAB ── -->
@@ -499,6 +610,43 @@ select option{background:var(--bg3);}
   </div>
 </div>
 
+<!-- TELEPROMPTER -->
+<div class="tp-overlay" id="tp-overlay">
+  <div class="tp-topbar">
+    <div class="tp-title" id="tp-title">Teleprompter</div>
+    <button class="tp-close" onclick="closeTP()">Done</button>
+  </div>
+  <div class="tp-scroll" id="tp-scroll">
+    <div id="tp-content"></div>
+  </div>
+  <div class="tp-controls">
+    <div class="tp-speed-row">
+      <div class="tp-speed-label">Speed</div>
+      <div class="tp-speed-track" id="tp-track">
+        <div class="tp-speed-thumb" id="tp-thumb"></div>
+      </div>
+    </div>
+    <div class="tp-btn-row">
+      <button class="tp-btn start" id="tp-play-btn" onclick="toggleScroll()">▶ Start</button>
+      <button class="tp-btn mirror-btn" id="tp-mirror-btn" onclick="toggleMirror()">⇔ Mirror</button>
+    </div>
+    <div class="tp-progress" id="tp-progress"> </div>
+  </div>
+</div>
+
+<!-- SHOT LIST -->
+<div class="overlay" id="shotlist-overlay" onclick="closeOverlayOutside(event,'shotlist-overlay')">
+  <div class="sheet" style="max-height:88vh;">
+    <div class="sheet-handle"></div>
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
+      <div class="sheet-title" style="margin-bottom:0">Shot List</div>
+      <button onclick="resetShotChecks()" style="background:none;border:none;color:var(--text3);font-size:12px;font-family:inherit;cursor:pointer">Reset all</button>
+    </div>
+    <div id="shotlist-body"></div>
+    <button class="gen-btn secondary" onclick="closeOverlay('shotlist-overlay')" style="margin-top:16px">Close</button>
+  </div>
+</div>
+
 <script>
 if('serviceWorker' in navigator) navigator.serviceWorker.register('./sw.js').catch(()=>{});
 
@@ -506,6 +654,180 @@ if('serviceWorker' in navigator) navigator.serviceWorker.register('./sw.js').cat
 let agentMode = 'solo';
 let lastConcepts = [];
 let lastBrief = {};
+let nervousMode = false;
+let currentScript = null;
+
+// ── NERVOUS AGENT PRESET ───────────────────────────────────────────────────
+function applyNervousPreset(){
+  nervousMode = true;
+  // Set length to 30s
+  document.querySelectorAll('#length-chips .chip').forEach(c=>{
+    c.classList.toggle('on', c.dataset.val==='30');
+  });
+  // Set structure to intro only only
+  document.querySelectorAll('#struct-chips .chip').forEach(c=>{
+    c.classList.toggle('on', c.dataset.val==='intro_only');
+  });
+  document.getElementById('preset-banner').style.display='flex';
+  document.getElementById('nervous-btn').style.display='none';
+  toast('⚡ Nervous agent mode on — 30 sec, intro only, max 2 lines');
+}
+function clearPreset(){
+  nervousMode = false;
+  document.getElementById('preset-banner').style.display='none';
+  document.getElementById('nervous-btn').style.display='';
+}
+
+// ── TELEPROMPTER ───────────────────────────────────────────────────────────
+let tpScrolling = false;
+let tpInterval = null;
+let tpMirrored = false;
+let tpSpeed = 0.4; // px per tick
+
+function openTP(script){
+  // Build agent-only lines
+  const agentSegs = (script.segments||[]).filter(s=>s.type==='agent'||s.type==='vo');
+  if(!agentSegs.length){ toast('No spoken lines to display'); return; }
+
+  const content = document.getElementById('tp-content');
+  content.innerHTML = agentSegs.map((seg,i)=>`
+    ${i>0?'<div class="tp-segment-break"></div>':''}
+    <div class="tp-text" style="margin-bottom:0">${seg.text}</div>
+  `).join('');
+
+  document.getElementById('tp-title').textContent = script.title||'Teleprompter';
+  document.getElementById('tp-scroll').scrollTop = 0;
+  document.getElementById('tp-play-btn').textContent = '▶ Start';
+  tpScrolling = false;
+  clearInterval(tpInterval);
+
+  // Speed slider
+  initSpeedSlider();
+
+  document.getElementById('tp-overlay').classList.add('show');
+  // Keep screen awake if supported
+  if(navigator.wakeLock) navigator.wakeLock.request('screen').catch(()=>{});
+}
+
+function closeTP(){
+  clearInterval(tpInterval);
+  tpScrolling = false;
+  document.getElementById('tp-overlay').classList.remove('show');
+}
+
+function toggleScroll(){
+  const btn = document.getElementById('tp-play-btn');
+  const scroll = document.getElementById('tp-scroll');
+  if(tpScrolling){
+    clearInterval(tpInterval);
+    tpScrolling = false;
+    btn.textContent = '▶ Resume';
+    btn.className = 'tp-btn start';
+  } else {
+    tpScrolling = true;
+    btn.textContent = '⏸ Pause';
+    btn.className = 'tp-btn pause';
+    tpInterval = setInterval(()=>{
+      scroll.scrollTop += tpSpeed;
+      const pct = Math.min(100, Math.round((scroll.scrollTop / (scroll.scrollHeight - scroll.clientHeight))*100));
+      document.getElementById('tp-progress').textContent = pct >= 100 ? 'End of script' : `${pct}%`;
+      if(scroll.scrollTop >= scroll.scrollHeight - scroll.clientHeight){
+        clearInterval(tpInterval);
+        tpScrolling = false;
+        btn.textContent = '▶ Restart';
+        btn.className = 'tp-btn start';
+        document.getElementById('tp-progress').textContent = 'End of script ✓';
+      }
+    }, 16);
+  }
+}
+
+function toggleMirror(){
+  tpMirrored = !tpMirrored;
+  document.querySelectorAll('.tp-text').forEach(el=>{
+    el.classList.toggle('mirror', tpMirrored);
+  });
+  document.getElementById('tp-mirror-btn').style.color = tpMirrored ? 'var(--gold)' : '#888';
+}
+
+function initSpeedSlider(){
+  const track = document.getElementById('tp-track');
+  const thumb = document.getElementById('tp-thumb');
+  // tpSpeed range: 0.1 (slow) to 1.5 (fast), default 0.4
+  const pct = (tpSpeed - 0.1) / 1.4;
+  thumb.style.left = (pct * 100) + '%';
+
+  let dragging = false;
+  const updateSpeed = (clientX) => {
+    const rect = track.getBoundingClientRect();
+    const ratio = Math.max(0, Math.min(1, (clientX - rect.left) / rect.width));
+    tpSpeed = 0.1 + ratio * 1.4;
+    thumb.style.left = (ratio * 100) + '%';
+  };
+  thumb.onmousedown = thumb.ontouchstart = (e) => {
+    dragging = true;
+    e.preventDefault();
+  };
+  document.onmousemove = (e) => { if(dragging) updateSpeed(e.clientX); };
+  document.ontouchmove = (e) => { if(dragging) updateSpeed(e.touches[0].clientX); };
+  document.onmouseup = document.ontouchend = () => { dragging = false; };
+  track.onclick = (e) => updateSpeed(e.clientX);
+}
+
+// ── SHOT LIST ─────────────────────────────────────────────────────────────
+let shotChecks = {};
+
+function openShotList(script, property){
+  // Generate shots from b-roll segments + always-needed shots
+  const brollSegs = (script.segments||[]).filter(s=>s.type==='broll');
+
+  const always = ['Exterior wide shot','Front door approach','Aerial / drone (if available)'];
+  const fromScript = brollSegs.flatMap(s=>{
+    // Parse the b-roll text into individual shots
+    return s.text.split(/[,\n]|(?:suggested shots:)/i)
+      .map(x=>x.replace(/[\[\]]/g,'').trim())
+      .filter(x=>x.length>4 && x.length<80);
+  });
+  const cta = ['Agent outro / CTA shot','Final exterior or aerial close'];
+
+  const allShots = {
+    'Always get': always,
+    'From this script': fromScript.length ? fromScript : ['Interior walkthrough — living room','Kitchen','Primary bedroom','Bathrooms'],
+    'Agent on camera': (script.segments||[]).filter(s=>s.type==='agent').map((s,i)=>`Agent segment ${i+1} — ${s.tag}`),
+    'Finish strong': cta,
+  };
+
+  const body = document.getElementById('shotlist-body');
+  body.innerHTML = Object.entries(allShots).map(([cat, shots])=>`
+    <div class="shot-category">${cat}</div>
+    <div class="shot-list">
+      ${shots.map((shot,i)=>{
+        const key = cat+i;
+        const done = shotChecks[key]||false;
+        return `<div class="shot-item">
+          <div class="shot-check${done?' done':''}" onclick="toggleShot('${key}',this)">${done?'✓':''}</div>
+          <div class="shot-text${done?' done':''}" id="stext-${key}">${shot}</div>
+        </div>`;
+      }).join('')}
+    </div>`).join('');
+
+  document.getElementById('shotlist-overlay').classList.add('show');
+}
+
+function toggleShot(key, el){
+  shotChecks[key] = !shotChecks[key];
+  const done = shotChecks[key];
+  el.classList.toggle('done', done);
+  el.textContent = done ? '✓' : '';
+  const textEl = document.getElementById('stext-'+key);
+  if(textEl) textEl.classList.toggle('done', done);
+}
+
+function resetShotChecks(){
+  shotChecks = {};
+  document.querySelectorAll('.shot-check').forEach(el=>{el.classList.remove('done');el.textContent='';});
+  document.querySelectorAll('.shot-text').forEach(el=>el.classList.remove('done'));
+}
 
 // ── SETTINGS ──────────────────────────────────────────────────────────────
 function loadSettings(){
@@ -537,6 +859,30 @@ document.querySelectorAll('#focus-chips .chip, #tone-chips .chip, #struct-chips 
 });
 function getChips(id){ return [...document.querySelectorAll(`#${id} .chip.on`)].map(c=>c.dataset.val); }
 
+// ── LENGTH CHIPS (single-select) ──────────────────────────────────────────
+document.querySelectorAll('#length-chips .chip').forEach(c=>{
+  c.addEventListener('click',()=>{
+    document.querySelectorAll('#length-chips .chip').forEach(x=>x.classList.remove('on'));
+    c.classList.add('on');
+  });
+});
+function getVideoLength(){
+  const sel = document.querySelector('#length-chips .chip.on');
+  return sel ? parseInt(sel.dataset.val) : 60;
+}
+function getWordLimits(seconds){
+  // ~130 words/min speaking pace, subtract b-roll time
+  const totalWords = Math.round((seconds / 60) * 130);
+  const limits = {
+    30:  { total: 60,  perSegment: 20,  note: 'MAX 60 spoken words total across ALL agent segments combined. This is a 30-second video. Every word must earn its place. No fluff whatsoever.' },
+    60:  { total: 110, perSegment: 35,  note: 'MAX 110 spoken words total across ALL agent segments combined. This is a 60-second Reel. Keep each agent segment punchy — 2-4 sentences max per appearance.' },
+    90:  { total: 160, perSegment: 50,  note: 'MAX 160 spoken words total across ALL agent segments combined. This is a 90-second video. Each segment should be 3-5 tight sentences.' },
+    120: { total: 220, perSegment: 70,  note: 'MAX 220 spoken words total across ALL agent segments combined. 2-minute video. Segments can breathe a little but stay focused.' },
+    180: { total: 330, perSegment: 100, note: 'MAX 330 spoken words total across ALL agent segments combined. 3-minute video. More room to develop the narrative but don\'t ramble.' },
+  };
+  return limits[seconds] || limits[60];
+}
+
 // ── AGENT MODE ────────────────────────────────────────────────────────────
 function setAgentMode(mode){
   agentMode = mode;
@@ -566,8 +912,10 @@ function buildBrief(){
     focus:     getChips('focus-chips'),
     tone:      getChips('tone-chips'),
     structure: getChips('struct-chips'),
-    spark:     get('f-spark'),
+    spark:      get('f-spark'),
     agentMode,
+    videoLength: getVideoLength(),
+    nervousMode,
   };
 }
 
@@ -611,10 +959,12 @@ async function generateConcepts(){
     brief.brokerage && `Brokerage: ${brief.brokerage}`,
   ].filter(Boolean).join('\n');
 
+  const wordLimits = getWordLimits(brief.videoLength);
   const creativeLines = [
     brief.focus.length    && `Sell: ${brief.focus.join(', ')}`,
     brief.tone.length     && `Tone: ${brief.tone.join(', ')}`,
     brief.structure.length && `Structure: ${brief.structure.join(', ')}`,
+    `Target video length: ${brief.videoLength} seconds`,
     brief.spark           && `Creative spark / direction: ${brief.spark}`,
   ].filter(Boolean).join('\n');
 
@@ -647,7 +997,9 @@ Rules:
 - If it's a duo, at least 2 concepts should use both agents in interesting ways
 - The hook field must be specific and word-for-word ready — not a description, the actual line
 - Use the creative spark if provided — it should influence at least one concept heavily
-- DO NOT produce generic "welcome to this beautiful home" concepts — every concept needs an angle`;
+- DO NOT produce generic "welcome to this beautiful home" concepts — every concept needs an angle
+- CRITICAL: The target video is ${brief.videoLength} seconds. The hook you write must fit that length — short, punchy, not a monologue
+${brief.nervousMode ? '- NERVOUS AGENT MODE: All 4 concepts must use intro-only structure with max 2 sentences spoken. The agent barely has to remember anything. Super simple, super short.' : ''}` ;
 
   const userMsg = `Property:\n${propLines}\n\nAgent:\n${agentLines}\n\nCreative direction:\n${creativeLines}`;
 
@@ -746,6 +1098,8 @@ async function expandConcept(conceptId){
     ? `Two-agent team: ${brief.agent1||'Agent 1'} and ${brief.agent2||'Agent 2'}. Dynamic: ${brief.agentVibe||'unspecified'}.`
     : `Agent: ${brief.agent1||'unnamed'}. Personality: ${brief.agentVibe||'unspecified'}.`;
 
+  const wordLimits = getWordLimits(brief.videoLength || 60);
+
   const system = `You are a professional real estate video scriptwriter. Write camera-ready scripts that are specific, natural, and match the creative concept exactly.
 
 Return ONLY valid JSON. No markdown, no backticks.
@@ -772,9 +1126,13 @@ Rules:
 - If it's a duo, write lines for BOTH agents — label them by name in the text
 - If it's themed or uses a motif, carry it through the whole script
 - Segments: intro_only=2, bookend=3, multi=4-6, voiceover=3-4
-- No generic filler. Every line should earn its place.`;
+- No generic filler. Every line should earn its place.
+- HARD WORD COUNT RULE: ${wordLimits.note}
+- Per agent segment: MAX ${wordLimits.perSegment} spoken words. Count them. Cut ruthlessly if over.
+- Think of it like Twitter for video — every word costs screen time. Make them count.
+${brief.nervousMode ? '- NERVOUS AGENT MODE ACTIVE: Agent speaks ONCE only, MAX 2 sentences, MAX 20 words total. That is a hard ceiling. They can barely remember their name on camera.' : ''}` ;
 
-  const userMsg = `Property:\n${propLines}\n\nAgent: ${agentInfo}\n\nConcept to expand:\nName: ${concept.name}\nPitch: ${concept.pitch}\nTone: ${concept.tone}\nStructure: ${concept.structure}\nOpening hook: "${concept.hook}"\n\nWrite the full script for this concept.`;
+  const userMsg = `Property:\n${propLines}\n\nAgent: ${agentInfo}\n\nTarget length: ${brief.videoLength || 60} seconds (STRICT — max ${wordLimits.total} spoken words total)\n\nConcept to expand:\nName: ${concept.name}\nPitch: ${concept.pitch}\nTone: ${concept.tone}\nStructure: ${concept.structure}\nOpening hook: "${concept.hook}"\n\nWrite the full script. Count your words. Stay under the limit.`;
 
   try {
     const res = await fetch('https://api.anthropic.com/v1/messages',{
@@ -807,6 +1165,16 @@ Rules:
 
 // ── SHOW SCRIPT SHEET ─────────────────────────────────────────────────────
 function showScriptSheet(script, concept){
+  // Count spoken words
+  const spokenWords = (script.segments||[])
+    .filter(s=>s.type==='agent'||s.type==='vo')
+    .reduce((acc,s)=>acc+(s.text||'').split(/\s+/).filter(Boolean).length,0);
+  const videoLen = lastBrief.videoLength||60;
+  const wl = getWordLimits(videoLen);
+  const overLimit = spokenWords > wl.total;
+  const wordCountHtml = `<div style="margin-top:8px;font-size:11px;font-weight:600;color:${overLimit?'#C0392B':'var(--gold)'}">
+    ${spokenWords} spoken words · target ${videoLen}s (max ${wl.total})${overLimit?' — over limit ⚠️':''}
+  </div>`;
   const segsHtml = (script.segments||[]).map(seg=>{
     const isBroll = seg.type==='broll';
     const isVo    = seg.type==='vo';
@@ -819,17 +1187,21 @@ function showScriptSheet(script, concept){
   }).join('');
 
   const saved = JSON.stringify({script, concept, property: lastBrief.address||lastBrief.features, date: new Date().toLocaleDateString()});
+  currentScript = script;
 
   document.getElementById('script-sheet-body').innerHTML = `
     <div class="script-view" style="border:none;background:transparent">
       <div class="sv-header">
         <div class="sv-title">${concept.emoji||'🎬'} ${script.title||concept.name}</div>
         <div class="sv-pitch">${script.pitch||concept.pitch}</div>
+        ${wordCountHtml}
       </div>
       <div class="sv-body">${segsHtml}</div>
-      <div class="sv-actions">
-        <button class="sv-btn primary" onclick="copyScript(this)">Copy script</button>
+      <div class="sv-actions" style="flex-wrap:wrap;gap:8px">
+        <button class="sv-btn primary" onclick="copyScript(this)">Copy</button>
         <button class="sv-btn secondary" onclick='saveScript(${saved.replace(/'/g,"&apos;")})'>Save</button>
+        <button class="sv-btn secondary" style="flex:none;width:100%;background:rgba(201,168,76,0.1);color:var(--gold);border-color:rgba(201,168,76,0.3)" onclick="openTP(currentScript)">📱 Teleprompter</button>
+        <button class="sv-btn secondary" style="flex:none;width:100%" onclick="openShotList(currentScript)">📋 Shot List</button>
       </div>
     </div>`;
 
@@ -879,7 +1251,7 @@ function renderSaved(){
 function viewSaved(i){
   const saved = JSON.parse(localStorage.getItem('saved_scripts')||'[]');
   const item = saved[i];
-  if(item) showScriptSheet(item.script, item.concept||{name:'Saved Script',emoji:'🎬',pitch:''});
+  if(item){ currentScript = item.script; showScriptSheet(item.script, item.concept||{name:'Saved Script',emoji:'🎬',pitch:''}); }
 }
 
 function deleteSaved(e,i){
