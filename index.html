@@ -5,682 +5,904 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="apple-mobile-web-app-title" content="RE Scripts">
-<meta name="theme-color" content="#1A1A1A">
+<meta name="apple-mobile-web-app-title" content="Pick Three Scripts">
+<meta name="theme-color" content="#0D0D0D">
 <link rel="manifest" href="manifest.json">
 <link rel="apple-touch-icon" href="icon-192.png">
-<title>RE Script Generator</title>
+<title>Pick Three Scripts</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
 <style>
-  :root {
-    --bg: #FAF9F6;
-    --bg2: #F2F0EC;
-    --bg3: #E8E5DF;
-    --text: #1A1A1A;
-    --text2: #666660;
-    --text3: #999994;
-    --border: rgba(0,0,0,0.1);
-    --border2: rgba(0,0,0,0.18);
-    --radius: 12px;
-    --radius-sm: 8px;
-    --safe-top: env(safe-area-inset-top, 0px);
-    --safe-bot: env(safe-area-inset-bottom, 0px);
-  }
-  @media (prefers-color-scheme: dark) {
-    :root {
-      --bg: #141414;
-      --bg2: #1E1E1E;
-      --bg3: #2A2A2A;
-      --text: #F0EEE8;
-      --text2: #999994;
-      --text3: #666660;
-      --border: rgba(255,255,255,0.1);
-      --border2: rgba(255,255,255,0.18);
-    }
-  }
-  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
-  html, body { height: 100%; background: var(--bg); color: var(--text); font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', sans-serif; }
+:root {
+  --bg:       #0D0D0D;
+  --bg2:      #161616;
+  --bg3:      #1F1F1F;
+  --bg4:      #2A2A2A;
+  --text:     #F0EDE6;
+  --text2:    #888880;
+  --text3:    #555550;
+  --gold:     #C9A84C;
+  --gold2:    #E8C97A;
+  --border:   rgba(255,255,255,0.07);
+  --border2:  rgba(255,255,255,0.13);
+  --radius:   14px;
+  --rsm:      9px;
+  --safe-top: env(safe-area-inset-top, 0px);
+  --safe-bot: env(safe-area-inset-bottom, 0px);
+}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
+html,body{height:100%;background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;overscroll-behavior:none;}
 
-  /* ── SHELL ── */
-  #app { display: flex; flex-direction: column; height: 100%; max-width: 600px; margin: 0 auto; }
+/* SHELL */
+#app{display:flex;flex-direction:column;height:100%;max-width:560px;margin:0 auto;}
 
-  /* ── HEADER ── */
-  .header {
-    padding: calc(var(--safe-top) + 14px) 20px 14px;
-    background: var(--bg);
-    border-bottom: 0.5px solid var(--border);
-    display: flex; align-items: center; justify-content: space-between;
-    position: sticky; top: 0; z-index: 10;
-  }
-  .header-title { font-size: 17px; font-weight: 600; letter-spacing: -0.3px; }
-  .header-sub { font-size: 12px; color: var(--text3); margin-top: 1px; }
-  .settings-btn {
-    width: 36px; height: 36px; border-radius: 50%;
-    background: var(--bg2); border: 0.5px solid var(--border);
-    display: flex; align-items: center; justify-content: center;
-    cursor: pointer; font-size: 16px;
-  }
+/* HEADER */
+.hdr{
+  padding:calc(var(--safe-top) + 16px) 20px 14px;
+  background:var(--bg);
+  border-bottom:0.5px solid var(--border);
+  display:flex;align-items:center;justify-content:space-between;
+  position:sticky;top:0;z-index:20;
+}
+.hdr-left{display:flex;flex-direction:column;gap:2px;}
+.hdr-title{font-family:'Instrument Serif',serif;font-size:20px;letter-spacing:-0.2px;color:var(--text);}
+.hdr-title span{color:var(--gold);font-style:italic;}
+.hdr-sub{font-size:11px;color:var(--text3);letter-spacing:0.3px;}
+.icon-btn{
+  width:36px;height:36px;border-radius:50%;
+  background:var(--bg3);border:0.5px solid var(--border2);
+  display:flex;align-items:center;justify-content:center;
+  cursor:pointer;font-size:15px;color:var(--text2);
+  transition:background 0.15s;
+}
+.icon-btn:active{background:var(--bg4);}
 
-  /* ── TABS ── */
-  .tabs {
-    display: flex; background: var(--bg);
-    border-bottom: 0.5px solid var(--border);
-    padding: 0 20px;
-  }
-  .tab {
-    flex: 1; padding: 10px 0; text-align: center;
-    font-size: 13px; font-weight: 500; color: var(--text3);
-    cursor: pointer; border-bottom: 2px solid transparent;
-    transition: color 0.15s, border-color 0.15s;
-  }
-  .tab.active { color: var(--text); border-bottom-color: var(--text); }
+/* TABS */
+.tabs{display:flex;background:var(--bg);border-bottom:0.5px solid var(--border);padding:0 20px;gap:4px;}
+.tab{
+  padding:10px 16px;font-size:13px;font-weight:500;color:var(--text3);
+  cursor:pointer;border-bottom:2px solid transparent;transition:all 0.15s;
+}
+.tab.active{color:var(--gold);border-bottom-color:var(--gold);}
 
-  /* ── SCROLL CONTENT ── */
-  .content {
-    flex: 1; overflow-y: auto;
-    padding: 20px 20px calc(var(--safe-bot) + 24px);
-    -webkit-overflow-scrolling: touch;
-  }
+/* SCROLL */
+.content{flex:1;overflow-y:auto;padding:20px 20px calc(var(--safe-bot) + 28px);-webkit-overflow-scrolling:touch;}
 
-  /* ── FORM ELEMENTS ── */
-  .section { margin-bottom: 20px; }
-  .field-label {
-    font-size: 11px; font-weight: 600; color: var(--text3);
-    text-transform: uppercase; letter-spacing: 0.6px;
-    margin-bottom: 6px; display: block;
-  }
-  input[type=text], input[type=password], textarea {
-    width: 100%; padding: 12px 14px;
-    background: var(--bg2); border: 0.5px solid var(--border);
-    border-radius: var(--radius-sm); color: var(--text);
-    font-family: inherit; font-size: 16px; /* 16px prevents iOS zoom */
-    outline: none; appearance: none; -webkit-appearance: none;
-    transition: border-color 0.15s;
-  }
-  input[type=text]:focus, input[type=password]:focus, textarea:focus {
-    border-color: var(--border2);
-    background: var(--bg);
-  }
-  textarea { resize: none; line-height: 1.5; min-height: 80px; }
+/* ── FORM ── */
+.section{margin-bottom:18px;}
+.field-label{
+  font-size:10px;font-weight:600;color:var(--text3);
+  text-transform:uppercase;letter-spacing:0.8px;
+  margin-bottom:6px;display:block;
+}
+input[type=text],input[type=password],textarea,select{
+  width:100%;padding:12px 14px;
+  background:var(--bg2);border:0.5px solid var(--border2);
+  border-radius:var(--rsm);color:var(--text);
+  font-family:'DM Sans',sans-serif;font-size:16px;
+  outline:none;-webkit-appearance:none;transition:border-color 0.15s,background 0.15s;
+}
+input:focus,textarea:focus,select:focus{border-color:var(--gold);background:var(--bg3);}
+textarea{resize:none;line-height:1.5;}
+select option{background:var(--bg3);}
 
-  /* ── CHIP SELECTORS ── */
-  .chips { display: flex; flex-wrap: wrap; gap: 8px; }
-  .chip {
-    padding: 7px 14px; border-radius: 999px;
-    border: 0.5px solid var(--border2);
-    background: var(--bg2); color: var(--text2);
-    font-size: 13px; font-weight: 500; cursor: pointer;
-    transition: all 0.12s; user-select: none;
-  }
-  .chip.on { background: var(--text); color: var(--bg); border-color: var(--text); }
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
 
-  /* ── GENERATE BUTTON ── */
-  .gen-btn {
-    width: 100%; padding: 15px;
-    background: var(--text); color: var(--bg);
-    border: none; border-radius: var(--radius);
-    font-family: inherit; font-size: 16px; font-weight: 600;
-    cursor: pointer; margin-top: 8px;
-    transition: opacity 0.15s, transform 0.1s;
-    -webkit-appearance: none;
-  }
-  .gen-btn:active { opacity: 0.8; transform: scale(0.99); }
-  .gen-btn:disabled { opacity: 0.35; }
+/* CHIPS */
+.chips{display:flex;flex-wrap:wrap;gap:7px;}
+.chip{
+  padding:7px 13px;border-radius:999px;
+  border:0.5px solid var(--border2);
+  background:var(--bg2);color:var(--text2);
+  font-size:12px;font-weight:500;cursor:pointer;
+  transition:all 0.12s;user-select:none;
+}
+.chip.on{background:var(--gold);color:#0D0D0D;border-color:var(--gold);font-weight:600;}
+.chip:active{opacity:0.7;}
 
-  /* ── RESULTS ── */
-  .results { display: flex; flex-direction: column; gap: 16px; }
+/* SINGLE SELECT CHIPS */
+.chip-solo{
+  padding:7px 13px;border-radius:999px;
+  border:0.5px solid var(--border2);
+  background:var(--bg2);color:var(--text2);
+  font-size:12px;font-weight:500;cursor:pointer;
+  transition:all 0.12s;user-select:none;
+}
+.chip-solo.on{background:var(--bg4);color:var(--text);border-color:var(--border2);}
+.chip-solo.sel{background:var(--gold);color:#0D0D0D;border-color:var(--gold);font-weight:600;}
 
-  .script-card {
-    background: var(--bg2);
-    border: 0.5px solid var(--border);
-    border-radius: var(--radius);
-    overflow: hidden;
-  }
-  .card-header {
-    padding: 12px 14px 10px;
-    border-bottom: 0.5px solid var(--border);
-    display: flex; align-items: flex-start; justify-content: space-between; gap: 8px;
-  }
-  .card-meta { flex: 1; min-width: 0; }
-  .card-title { font-size: 14px; font-weight: 600; line-height: 1.3; }
-  .badge-row { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 5px; }
-  .badge {
-    font-size: 11px; font-weight: 600; padding: 3px 8px;
-    border-radius: 999px; white-space: nowrap;
-  }
-  .b-classic { background: #D4E8F8; color: #0C447C; }
-  .b-viral   { background: #FAE4C0; color: #633806; }
-  .b-story   { background: #D8ECC8; color: #27500A; }
-  .b-brief   { background: #E4E2FC; color: #3C3489; }
-  .b-struct  { background: var(--bg3); color: var(--text2); }
+/* DIVIDER */
+.divider{height:0.5px;background:var(--border);margin:20px 0;}
 
-  .copy-btn {
-    padding: 6px 12px; border-radius: var(--radius-sm);
-    border: 0.5px solid var(--border2);
-    background: var(--bg); color: var(--text2);
-    font-family: inherit; font-size: 12px; font-weight: 500;
-    cursor: pointer; white-space: nowrap; flex-shrink: 0;
-  }
-  .copy-btn:active { opacity: 0.6; }
+/* SECTION TITLE */
+.sec-title{font-size:13px;font-weight:600;color:var(--text);margin-bottom:10px;}
 
-  .card-body { padding: 14px; }
-  .segment { margin-bottom: 14px; }
-  .segment:last-child { margin-bottom: 0; }
-  .seg-tag {
-    font-size: 10px; font-weight: 700; letter-spacing: 0.7px;
-    text-transform: uppercase; color: var(--text3);
-    padding: 3px 7px; border: 0.5px solid var(--border);
-    border-radius: 4px; display: inline-block; margin-bottom: 7px;
-  }
-  .seg-text { font-size: 14px; line-height: 1.7; color: var(--text); }
-  .seg-text.broll { color: var(--text2); font-style: italic; font-size: 13px; }
+/* AGENT TOGGLE */
+.agent-toggle{display:flex;gap:8px;margin-bottom:14px;}
+.atoggle{
+  flex:1;padding:9px;border-radius:var(--rsm);
+  border:0.5px solid var(--border2);background:var(--bg2);
+  color:var(--text2);font-size:13px;font-weight:500;
+  text-align:center;cursor:pointer;transition:all 0.15s;
+}
+.atoggle.sel{background:var(--bg4);border-color:var(--gold);color:var(--text);}
 
-  /* ── LOADING ── */
-  .loading {
-    display: flex; flex-direction: column; align-items: center;
-    padding: 48px 24px; gap: 16px; color: var(--text3); font-size: 14px;
-  }
-  .spinner {
-    width: 28px; height: 28px; border-radius: 50%;
-    border: 2px solid var(--border2);
-    border-top-color: var(--text);
-    animation: spin 0.7s linear infinite;
-  }
-  @keyframes spin { to { transform: rotate(360deg); } }
+/* GENERATE BTN */
+.gen-btn{
+  width:100%;padding:15px;margin-top:8px;
+  background:linear-gradient(135deg,var(--gold),var(--gold2));
+  color:#0D0D0D;border:none;border-radius:var(--radius);
+  font-family:'DM Sans',sans-serif;font-size:15px;font-weight:700;
+  cursor:pointer;letter-spacing:0.2px;
+  transition:opacity 0.15s,transform 0.1s;
+  -webkit-appearance:none;
+}
+.gen-btn:active{opacity:0.85;transform:scale(0.99);}
+.gen-btn:disabled{opacity:0.3;}
+.gen-btn.secondary{
+  background:transparent;color:var(--text2);
+  border:0.5px solid var(--border2);font-weight:500;
+  margin-top:10px;
+}
 
-  /* ── EMPTY / ERROR STATES ── */
-  .empty {
-    text-align: center; padding: 40px 20px;
-    color: var(--text3); font-size: 14px; line-height: 1.6;
-  }
-  .empty-icon { font-size: 32px; margin-bottom: 12px; }
+/* ── CONCEPT CARDS ── */
+.concepts{display:flex;flex-direction:column;gap:14px;margin-top:4px;}
 
-  /* ── SETTINGS MODAL ── */
-  .overlay {
-    position: fixed; inset: 0; z-index: 100;
-    background: rgba(0,0,0,0.5);
-    display: flex; align-items: flex-end;
-    opacity: 0; pointer-events: none; transition: opacity 0.2s;
-  }
-  .overlay.show { opacity: 1; pointer-events: all; }
-  .sheet {
-    width: 100%; max-width: 600px; margin: 0 auto;
-    background: var(--bg);
-    border-radius: 20px 20px 0 0;
-    padding: 20px 20px calc(var(--safe-bot) + 24px);
-    transform: translateY(100%); transition: transform 0.25s cubic-bezier(.32,.72,0,1);
-  }
-  .overlay.show .sheet { transform: translateY(0); }
-  .sheet-handle {
-    width: 36px; height: 4px; border-radius: 2px;
-    background: var(--border2); margin: 0 auto 20px;
-  }
-  .sheet-title { font-size: 17px; font-weight: 600; margin-bottom: 16px; }
+.concept-card{
+  background:var(--bg2);border:0.5px solid var(--border2);
+  border-radius:var(--radius);overflow:hidden;
+  transition:border-color 0.2s;cursor:pointer;
+}
+.concept-card:active{border-color:var(--gold);}
 
-  /* ── SAVED SCRIPTS ── */
-  .saved-empty { text-align: center; padding: 48px 20px; color: var(--text3); font-size: 14px; }
-  .saved-card {
-    background: var(--bg2); border: 0.5px solid var(--border);
-    border-radius: var(--radius); padding: 12px 14px;
-    margin-bottom: 12px; cursor: pointer;
-  }
-  .saved-card-title { font-size: 14px; font-weight: 600; }
-  .saved-card-meta { font-size: 12px; color: var(--text3); margin-top: 3px; }
-  .delete-btn { color: #C0392B; font-size: 12px; margin-top: 6px; cursor: pointer; background: none; border: none; font-family: inherit; padding: 0; }
+.cc-header{
+  padding:14px 16px 12px;
+  display:flex;align-items:flex-start;gap:12px;
+}
+.cc-emoji{
+  font-size:26px;line-height:1;flex-shrink:0;
+  width:42px;height:42px;background:var(--bg3);
+  border-radius:10px;display:flex;align-items:center;justify-content:center;
+}
+.cc-meta{flex:1;min-width:0;}
+.cc-name{font-size:15px;font-weight:600;color:var(--text);line-height:1.3;}
+.cc-pitch{font-size:13px;color:var(--text2);margin-top:4px;line-height:1.5;}
+.cc-tags{display:flex;flex-wrap:wrap;gap:5px;margin-top:8px;}
+.cc-tag{
+  font-size:10px;font-weight:600;padding:2px 8px;border-radius:999px;
+  background:var(--bg3);color:var(--text3);letter-spacing:0.3px;
+}
+.cc-tag.gold{background:rgba(201,168,76,0.15);color:var(--gold);}
 
-  /* ── UTIL ── */
-  .divider { height: 0.5px; background: var(--border); margin: 16px 0; }
-  .tip { font-size: 12px; color: var(--text3); line-height: 1.5; margin-top: 6px; }
+.cc-expand-btn{
+  width:100%;padding:11px 16px;
+  background:var(--bg3);border:none;border-top:0.5px solid var(--border);
+  color:var(--gold);font-family:'DM Sans',sans-serif;font-size:13px;font-weight:600;
+  cursor:pointer;text-align:left;display:flex;align-items:center;justify-content:space-between;
+  transition:background 0.15s;
+}
+.cc-expand-btn:active{background:var(--bg4);}
+
+/* FULL SCRIPT VIEW */
+.script-view{
+  background:var(--bg2);border:0.5px solid var(--border2);
+  border-radius:var(--radius);overflow:hidden;
+  margin-top:4px;
+}
+.sv-header{
+  padding:16px;border-bottom:0.5px solid var(--border);
+  background:var(--bg3);
+}
+.sv-title{font-family:'Instrument Serif',serif;font-size:18px;color:var(--text);line-height:1.3;}
+.sv-pitch{font-size:12px;color:var(--text2);margin-top:4px;line-height:1.5;}
+.sv-body{padding:16px;display:flex;flex-direction:column;gap:16px;}
+
+.seg{border-left:2px solid var(--border2);padding-left:14px;}
+.seg.agent-seg{border-left-color:var(--gold);}
+.seg.broll-seg{border-left-color:var(--text3);}
+.seg-tag{
+  font-size:10px;font-weight:700;letter-spacing:0.8px;
+  text-transform:uppercase;color:var(--text3);margin-bottom:6px;
+}
+.seg.agent-seg .seg-tag{color:var(--gold);}
+.seg-text{font-size:14px;line-height:1.75;color:var(--text);}
+.seg-text.broll{color:var(--text2);font-style:italic;font-size:13px;}
+.seg-note{
+  font-size:11px;color:var(--text3);margin-top:6px;
+  font-style:italic;line-height:1.4;
+}
+
+.sv-actions{
+  padding:14px 16px calc(14px);
+  border-top:0.5px solid var(--border);
+  display:flex;gap:8px;
+}
+.sv-btn{
+  flex:1;padding:11px;border-radius:var(--rsm);
+  font-family:'DM Sans',sans-serif;font-size:13px;font-weight:600;
+  cursor:pointer;border:0.5px solid var(--border2);
+  transition:all 0.15s;-webkit-appearance:none;
+}
+.sv-btn.primary{background:var(--gold);color:#0D0D0D;border-color:var(--gold);}
+.sv-btn.secondary{background:var(--bg3);color:var(--text2);}
+.sv-btn:active{opacity:0.7;}
+
+/* LOADING */
+.loading{
+  display:flex;flex-direction:column;align-items:center;
+  padding:56px 24px;gap:16px;
+}
+.loading-label{font-size:13px;color:var(--text3);letter-spacing:0.3px;}
+.loading-sub{font-size:12px;color:var(--text3);text-align:center;line-height:1.5;margin-top:-4px;}
+.spinner{
+  width:32px;height:32px;border-radius:50%;
+  border:2px solid var(--bg4);border-top-color:var(--gold);
+  animation:spin 0.8s linear infinite;
+}
+@keyframes spin{to{transform:rotate(360deg);}}
+
+/* EMPTY */
+.empty{text-align:center;padding:48px 20px;color:var(--text3);font-size:14px;line-height:1.6;}
+.empty-icon{font-size:36px;margin-bottom:12px;}
+
+/* SAVED */
+.saved-card{
+  background:var(--bg2);border:0.5px solid var(--border);
+  border-radius:var(--radius);padding:14px 16px;margin-bottom:12px;cursor:pointer;
+  transition:border-color 0.15s;
+}
+.saved-card:active{border-color:var(--gold);}
+.saved-title{font-size:14px;font-weight:600;color:var(--text);}
+.saved-meta{font-size:12px;color:var(--text3);margin-top:3px;}
+.saved-del{
+  background:none;border:none;color:#8B3A3A;
+  font-size:12px;font-family:'DM Sans',sans-serif;
+  cursor:pointer;padding:0;margin-top:8px;
+}
+
+/* SETTINGS SHEET */
+.overlay{
+  position:fixed;inset:0;z-index:100;
+  background:rgba(0,0,0,0.7);
+  display:flex;align-items:flex-end;
+  opacity:0;pointer-events:none;transition:opacity 0.2s;
+}
+.overlay.show{opacity:1;pointer-events:all;}
+.sheet{
+  width:100%;max-width:560px;margin:0 auto;
+  background:var(--bg2);border-radius:20px 20px 0 0;
+  padding:20px 20px calc(var(--safe-bot) + 24px);
+  transform:translateY(100%);transition:transform 0.28s cubic-bezier(.32,.72,0,1);
+  max-height:90vh;overflow-y:auto;
+}
+.overlay.show .sheet{transform:translateY(0);}
+.sheet-handle{width:36px;height:4px;border-radius:2px;background:var(--bg4);margin:0 auto 20px;}
+.sheet-title{font-family:'Instrument Serif',serif;font-size:20px;margin-bottom:16px;color:var(--text);}
+
+/* TOAST */
+.toast{
+  position:fixed;bottom:calc(var(--safe-bot) + 90px);left:50%;transform:translateX(-50%);
+  background:var(--text);color:var(--bg);padding:10px 18px;border-radius:999px;
+  font-size:13px;font-weight:600;z-index:300;pointer-events:none;
+  white-space:nowrap;animation:fadeup 0.2s ease;
+}
+@keyframes fadeup{from{opacity:0;transform:translate(-50%,8px)}to{opacity:1;transform:translate(-50%,0)}}
+
+/* BACK BTN */
+.back-btn{
+  display:flex;align-items:center;gap:6px;
+  background:none;border:none;color:var(--gold);
+  font-family:'DM Sans',sans-serif;font-size:13px;font-weight:600;
+  cursor:pointer;padding:0;margin-bottom:16px;
+}
+
+.tip-text{font-size:12px;color:var(--text3);line-height:1.5;margin-top:5px;}
 </style>
 </head>
 <body>
 <div id="app">
 
-  <div class="header">
-    <div>
-      <div class="header-title">RE Script Generator</div>
-      <div class="header-sub">On-site video scripts</div>
+  <div class="hdr">
+    <div class="hdr-left">
+      <div class="hdr-title">Pick Three <span>Scripts</span></div>
+      <div class="hdr-sub">Real estate video concepts</div>
     </div>
-    <div class="settings-btn" onclick="openSettings()">⚙️</div>
+    <div class="icon-btn" onclick="openSettings()">⚙</div>
   </div>
 
   <div class="tabs">
-    <div class="tab active" id="tab-generate" onclick="switchTab('generate')">Generate</div>
+    <div class="tab active" id="tab-brief" onclick="switchTab('brief')">Brief</div>
+    <div class="tab" id="tab-concepts" onclick="switchTab('concepts')">Concepts</div>
     <div class="tab" id="tab-saved" onclick="switchTab('saved')">Saved</div>
   </div>
 
   <div class="content" id="main-content">
-    <!-- GENERATE TAB -->
-    <div id="view-generate">
+
+    <!-- ── BRIEF TAB ── -->
+    <div id="view-brief">
 
       <div class="section">
-        <label class="field-label">Address</label>
-        <input type="text" id="f-address" placeholder="123 Oak St, Westfield, NJ" autocomplete="off">
-      </div>
-
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px" class="section">
-        <div>
-          <label class="field-label">Price</label>
-          <input type="text" id="f-price" placeholder="$589,000">
+        <div class="sec-title">Property</div>
+        <div style="margin-bottom:10px">
+          <label class="field-label">Address</label>
+          <input type="text" id="f-address" placeholder="123 Oak St, Westfield, NJ" autocomplete="off">
+        </div>
+        <div class="grid2" style="margin-bottom:10px">
+          <div>
+            <label class="field-label">Price</label>
+            <input type="text" id="f-price" placeholder="$589,000">
+          </div>
+          <div>
+            <label class="field-label">Beds / Baths</label>
+            <input type="text" id="f-beds" placeholder="4bd / 2.5ba">
+          </div>
+        </div>
+        <div class="grid2" style="margin-bottom:10px">
+          <div>
+            <label class="field-label">Sq Ft</label>
+            <input type="text" id="f-sqft" placeholder="2,200">
+          </div>
+          <div>
+            <label class="field-label">Type</label>
+            <input type="text" id="f-type" placeholder="Colonial, ranch, condo…">
+          </div>
+        </div>
+        <div style="margin-bottom:10px">
+          <label class="field-label">Top features (comma separated)</label>
+          <input type="text" id="f-features" placeholder="renovated kitchen, pool, finished basement, new roof">
+        </div>
+        <div style="margin-bottom:10px">
+          <label class="field-label">Neighborhood / Location vibe</label>
+          <input type="text" id="f-vibe" placeholder="top schools, quiet cul-de-sac, near downtown…">
         </div>
         <div>
-          <label class="field-label">Beds / Baths</label>
-          <input type="text" id="f-beds" placeholder="4bd / 2.5ba">
+          <label class="field-label">Anything extra worth mentioning</label>
+          <textarea id="f-extras" rows="2" placeholder="Original hardwoods, 2-car garage, backs up to woods, new roof 2023…"></textarea>
         </div>
-      </div>
-
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px" class="section">
-        <div>
-          <label class="field-label">Sq Ft</label>
-          <input type="text" id="f-sqft" placeholder="2,200 sq ft">
-        </div>
-        <div>
-          <label class="field-label">Agent Name</label>
-          <input type="text" id="f-agent" placeholder="Sarah Johnson">
-        </div>
-      </div>
-
-      <div class="section">
-        <label class="field-label">Key Features (comma separated)</label>
-        <input type="text" id="f-features" placeholder="renovated kitchen, pool, finished basement">
-      </div>
-
-      <div class="section">
-        <label class="field-label">Neighborhood / Vibe (optional)</label>
-        <input type="text" id="f-vibe" placeholder="top schools, quiet street, near downtown">
-      </div>
-
-      <div class="section">
-        <label class="field-label">Extra selling points (optional)</label>
-        <textarea id="f-extras" placeholder="Original hardwoods, 2-car garage, new roof 2023..."></textarea>
       </div>
 
       <div class="divider"></div>
 
       <div class="section">
-        <label class="field-label">Style</label>
-        <div class="chips" id="style-chips">
-          <div class="chip on" data-val="classic">Classic</div>
-          <div class="chip on" data-val="viral">Viral</div>
-          <div class="chip on" data-val="story">Storytelling</div>
-          <div class="chip on" data-val="brief">Brief intro</div>
+        <div class="sec-title">Agent Setup</div>
+        <div class="agent-toggle" id="agent-toggle">
+          <div class="atoggle sel" data-val="solo" onclick="setAgentMode('solo')">Solo agent</div>
+          <div class="atoggle" data-val="duo" onclick="setAgentMode('duo')">Two-agent team</div>
+        </div>
+
+        <div id="agent-solo">
+          <div class="grid2">
+            <div>
+              <label class="field-label">Agent Name</label>
+              <input type="text" id="f-agent1" placeholder="Sarah Johnson">
+            </div>
+            <div>
+              <label class="field-label">Brokerage (optional)</label>
+              <input type="text" id="f-brokerage" placeholder="Keller Williams">
+            </div>
+          </div>
+          <div style="margin-top:10px">
+            <label class="field-label">Agent personality / vibe (optional)</label>
+            <input type="text" id="f-agent1-vibe" placeholder="funny and relatable, luxury expert, no-nonsense, warm mom energy…">
+          </div>
+        </div>
+
+        <div id="agent-duo" style="display:none">
+          <div class="grid2" style="margin-bottom:10px">
+            <div>
+              <label class="field-label">Agent 1 Name</label>
+              <input type="text" id="f-agent1b" placeholder="Sarah Johnson">
+            </div>
+            <div>
+              <label class="field-label">Agent 2 Name</label>
+              <input type="text" id="f-agent2" placeholder="Mike Chen">
+            </div>
+          </div>
+          <div>
+            <label class="field-label">Their dynamic (optional)</label>
+            <input type="text" id="f-duo-dynamic" placeholder="married team, friendly rivals, mentor/mentee, business partners…">
+          </div>
+          <div style="margin-top:10px">
+            <label class="field-label">Brokerage (optional)</label>
+            <input type="text" id="f-brokerage2" placeholder="Keller Williams">
+          </div>
         </div>
       </div>
+
+      <div class="divider"></div>
 
       <div class="section">
-        <label class="field-label">Structure</label>
-        <div class="chips" id="struct-chips">
-          <div class="chip on" data-val="intro_only">Intro only</div>
-          <div class="chip on" data-val="bookend">Bookend</div>
-          <div class="chip on" data-val="multi">Multi-segment</div>
-          <div class="chip on" data-val="voiceover">Voiceover</div>
+        <div class="sec-title">Creative Direction</div>
+
+        <label class="field-label" style="margin-bottom:8px">Main focus — what should the video sell?</label>
+        <div class="chips" id="focus-chips" style="margin-bottom:16px">
+          <div class="chip on" data-val="house">The house</div>
+          <div class="chip" data-val="agent">The agent(s)</div>
+          <div class="chip" data-val="lifestyle">The lifestyle</div>
+          <div class="chip" data-val="deal">The deal / value</div>
+          <div class="chip" data-val="neighborhood">The neighborhood</div>
         </div>
+
+        <label class="field-label" style="margin-bottom:8px">Tone / vibe</label>
+        <div class="chips" id="tone-chips" style="margin-bottom:16px">
+          <div class="chip on" data-val="professional">Professional</div>
+          <div class="chip" data-val="cinematic">Cinematic</div>
+          <div class="chip" data-val="funny">Funny / playful</div>
+          <div class="chip" data-val="hype">High energy / hype</div>
+          <div class="chip" data-val="warm">Warm / emotional</div>
+          <div class="chip" data-val="dry">Dry / deadpan</div>
+          <div class="chip" data-val="luxe">Luxury / aspirational</div>
+        </div>
+
+        <label class="field-label" style="margin-bottom:8px">Video structure</label>
+        <div class="chips" id="struct-chips" style="margin-bottom:16px">
+          <div class="chip on" data-val="intro_only">Intro only</div>
+          <div class="chip" data-val="bookend">Bookend</div>
+          <div class="chip" data-val="multi">Multi-segment</div>
+          <div class="chip" data-val="voiceover">Voiceover</div>
+        </div>
+
+        <label class="field-label" style="margin-bottom:8px">Creative spark (optional but powerful)</label>
+        <textarea id="f-spark" rows="2" placeholder="Something with a theme, like the agent making puns about the pool. Or two agents debating who loves the kitchen more. Or open with the view from the backyard. Anything goes."></textarea>
+        <div class="tip-text">This is your creative brief. The more specific, the better the concepts.</div>
       </div>
 
-      <button class="gen-btn" id="gen-btn" onclick="generate()">Generate Scripts</button>
-
-      <div id="results" style="margin-top:20px"></div>
+      <button class="gen-btn" id="gen-btn" onclick="generateConcepts()">Generate Concepts →</button>
     </div>
 
-    <!-- SAVED TAB -->
+    <!-- ── CONCEPTS TAB ── -->
+    <div id="view-concepts" style="display:none">
+      <div id="concepts-inner">
+        <div class="empty">
+          <div class="empty-icon">✦</div>
+          <div>Fill in the Brief tab and tap Generate to see your concepts here.</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── SAVED TAB ── -->
     <div id="view-saved" style="display:none">
       <div id="saved-list"></div>
     </div>
+
   </div>
 </div>
 
-<!-- SETTINGS SHEET -->
-<div class="overlay" id="settings-overlay" onclick="closeSettingsOutside(event)">
+<!-- SETTINGS -->
+<div class="overlay" id="settings-overlay" onclick="closeOverlayOutside(event,'settings-overlay')">
   <div class="sheet">
     <div class="sheet-handle"></div>
     <div class="sheet-title">Settings</div>
 
     <label class="field-label">Anthropic API Key</label>
-    <input type="password" id="api-key-input" placeholder="sk-ant-..." autocomplete="off" autocorrect="off" spellcheck="false">
-    <div class="tip">Your key is stored only on this device. Never shared.</div>
+    <input type="password" id="api-key-input" placeholder="sk-ant-…" autocomplete="off" autocorrect="off" spellcheck="false">
+    <div class="tip-text" style="margin-bottom:16px">Stored only on this device. Never shared.</div>
 
-    <div class="divider"></div>
+    <label class="field-label">Default Agent Name</label>
+    <input type="text" id="default-agent" placeholder="Auto-fills the form">
 
-    <label class="field-label">Default Agent Name (optional)</label>
-    <input type="text" id="default-agent" placeholder="Your name — auto-fills the form">
-
-    <div class="divider"></div>
-
-    <button class="gen-btn" onclick="saveSettings()">Save Settings</button>
-    <button class="gen-btn" style="background:transparent;color:var(--text);border:0.5px solid var(--border2);margin-top:10px" onclick="closeSettings()">Cancel</button>
+    <div style="margin-top:20px">
+      <button class="gen-btn" onclick="saveSettings()">Save</button>
+      <button class="gen-btn secondary" onclick="closeOverlay('settings-overlay')">Cancel</button>
+    </div>
   </div>
 </div>
 
-<!-- SAVED SCRIPT VIEWER -->
-<div class="overlay" id="view-overlay" onclick="closeViewOutside(event)">
-  <div class="sheet" style="max-height:85vh;overflow-y:auto">
+<!-- FULL SCRIPT SHEET -->
+<div class="overlay" id="script-overlay" onclick="closeOverlayOutside(event,'script-overlay')">
+  <div class="sheet" style="max-height:88vh;">
     <div class="sheet-handle"></div>
-    <div id="view-sheet-content"></div>
-    <button class="gen-btn" style="background:transparent;color:var(--text);border:0.5px solid var(--border2);margin-top:16px" onclick="closeView()">Close</button>
+    <div id="script-sheet-body"></div>
+    <div style="padding:0 0 4px">
+      <button class="gen-btn secondary" onclick="closeOverlay('script-overlay')">Close</button>
+    </div>
   </div>
 </div>
 
 <script>
-// ── INIT ──────────────────────────────────────────────────────────────────
-if ('serviceWorker' in navigator) {
-  navigator.serviceWorker.register('./sw.js').catch(() => {});
-}
+if('serviceWorker' in navigator) navigator.serviceWorker.register('./sw.js').catch(()=>{});
 
-function loadSettings() {
-  const key = localStorage.getItem('anthropic_key') || '';
-  const agent = localStorage.getItem('default_agent') || '';
-  document.getElementById('api-key-input').value = key;
-  document.getElementById('default-agent').value = agent;
-  if (agent && !document.getElementById('f-agent').value) {
-    document.getElementById('f-agent').value = agent;
-  }
-}
+// ── STATE ──────────────────────────────────────────────────────────────────
+let agentMode = 'solo';
+let lastConcepts = [];
+let lastBrief = {};
 
-function saveSettings() {
-  const key = document.getElementById('api-key-input').value.trim();
-  const agent = document.getElementById('default-agent').value.trim();
-  localStorage.setItem('anthropic_key', key);
-  localStorage.setItem('default_agent', agent);
-  closeSettings();
-  showToast('Settings saved');
+// ── SETTINGS ──────────────────────────────────────────────────────────────
+function loadSettings(){
+  document.getElementById('api-key-input').value = localStorage.getItem('anthropic_key')||'';
+  document.getElementById('default-agent').value = localStorage.getItem('default_agent')||'';
 }
-
-function openSettings() {
-  loadSettings();
-  document.getElementById('settings-overlay').classList.add('show');
+function saveSettings(){
+  localStorage.setItem('anthropic_key', document.getElementById('api-key-input').value.trim());
+  localStorage.setItem('default_agent', document.getElementById('default-agent').value.trim());
+  closeOverlay('settings-overlay');
+  toast('Saved');
 }
-function closeSettings() { document.getElementById('settings-overlay').classList.remove('show'); }
-function closeSettingsOutside(e) { if (e.target === e.currentTarget) closeSettings(); }
-
-function closeView() { document.getElementById('view-overlay').classList.remove('show'); }
-function closeViewOutside(e) { if (e.target === e.currentTarget) closeView(); }
+function openSettings(){ loadSettings(); document.getElementById('settings-overlay').classList.add('show'); }
+function closeOverlay(id){ document.getElementById(id).classList.remove('show'); }
+function closeOverlayOutside(e,id){ if(e.target===e.currentTarget) closeOverlay(id); }
 
 // ── TABS ──────────────────────────────────────────────────────────────────
-function switchTab(t) {
-  document.getElementById('view-generate').style.display = t === 'generate' ? '' : 'none';
-  document.getElementById('view-saved').style.display = t === 'saved' ? '' : 'none';
-  document.getElementById('tab-generate').classList.toggle('active', t === 'generate');
-  document.getElementById('tab-saved').classList.toggle('active', t === 'saved');
-  if (t === 'saved') renderSaved();
+function switchTab(t){
+  ['brief','concepts','saved'].forEach(v=>{
+    document.getElementById('view-'+v).style.display = v===t?'':'none';
+    document.getElementById('tab-'+v).classList.toggle('active', v===t);
+  });
+  if(t==='saved') renderSaved();
 }
 
-// ── CHIPS ─────────────────────────────────────────────────────────────────
-document.querySelectorAll('.chip').forEach(c => {
-  c.addEventListener('click', () => c.classList.toggle('on'));
+// ── CHIPS (multi) ─────────────────────────────────────────────────────────
+document.querySelectorAll('#focus-chips .chip, #tone-chips .chip, #struct-chips .chip').forEach(c=>{
+  c.addEventListener('click',()=>c.classList.toggle('on'));
 });
+function getChips(id){ return [...document.querySelectorAll(`#${id} .chip.on`)].map(c=>c.dataset.val); }
 
-function getChips(id) {
-  return [...document.querySelectorAll(`#${id} .chip.on`)].map(c => c.dataset.val);
+// ── AGENT MODE ────────────────────────────────────────────────────────────
+function setAgentMode(mode){
+  agentMode = mode;
+  document.querySelectorAll('#agent-toggle .atoggle').forEach(a=>a.classList.toggle('sel',a.dataset.val===mode));
+  document.getElementById('agent-solo').style.display = mode==='solo'?'':'none';
+  document.getElementById('agent-duo').style.display  = mode==='duo'?'':'none';
 }
 
-// ── LABELS ───────────────────────────────────────────────────────────────
-const STYLE_META = {
-  classic: { label: 'Classic', cls: 'b-classic' },
-  viral:   { label: 'Viral',   cls: 'b-viral' },
-  story:   { label: 'Storytelling', cls: 'b-story' },
-  brief:   { label: 'Brief intro',  cls: 'b-brief' },
-};
-const STRUCT_LABELS = {
-  intro_only: 'Intro only',
-  bookend:    'Bookend',
-  multi:      'Multi-segment',
-  voiceover:  'Voiceover',
-};
+// ── BUILD BRIEF ───────────────────────────────────────────────────────────
+function buildBrief(){
+  const get = id => document.getElementById(id)?.value?.trim()||'';
+  const agent1 = agentMode==='solo' ? get('f-agent1') : get('f-agent1b');
+  const agent2 = agentMode==='duo'  ? get('f-agent2') : '';
+  return {
+    address:   get('f-address'),
+    price:     get('f-price'),
+    beds:      get('f-beds'),
+    sqft:      get('f-sqft'),
+    type:      get('f-type'),
+    features:  get('f-features'),
+    vibe:      get('f-vibe'),
+    extras:    get('f-extras'),
+    agent1,
+    agent2,
+    agentVibe: agentMode==='solo' ? get('f-agent1-vibe') : get('f-duo-dynamic'),
+    brokerage: agentMode==='solo' ? get('f-brokerage') : get('f-brokerage2'),
+    focus:     getChips('focus-chips'),
+    tone:      getChips('tone-chips'),
+    structure: getChips('struct-chips'),
+    spark:     get('f-spark'),
+    agentMode,
+  };
+}
 
-// ── GENERATE ─────────────────────────────────────────────────────────────
-async function generate() {
-  const apiKey = localStorage.getItem('anthropic_key') || '';
-  if (!apiKey) {
-    openSettings();
-    showToast('Add your API key first');
-    return;
-  }
+// ── GENERATE CONCEPTS ─────────────────────────────────────────────────────
+async function generateConcepts(){
+  const key = localStorage.getItem('anthropic_key')||'';
+  if(!key){ openSettings(); toast('Add your API key first'); return; }
 
-  const address  = document.getElementById('f-address').value.trim();
-  const price    = document.getElementById('f-price').value.trim();
-  const beds     = document.getElementById('f-beds').value.trim();
-  const sqft     = document.getElementById('f-sqft').value.trim();
-  const features = document.getElementById('f-features').value.trim();
-  const agent    = document.getElementById('f-agent').value.trim();
-  const vibe     = document.getElementById('f-vibe').value.trim();
-  const extras   = document.getElementById('f-extras').value.trim();
+  const brief = buildBrief();
+  if(!brief.features && !brief.address){ toast('Enter at least an address or features'); return; }
 
-  const styles   = getChips('style-chips');
-  const structs  = getChips('struct-chips');
-
-  if (!features && !address) {
-    showToast('Enter at least an address or features');
-    return;
-  }
-  if (!styles.length || !structs.length) {
-    showToast('Select at least one style and structure');
-    return;
-  }
+  lastBrief = brief;
 
   const btn = document.getElementById('gen-btn');
-  btn.disabled = true; btn.textContent = 'Generating…';
+  btn.disabled=true; btn.textContent='Thinking…';
 
-  document.getElementById('results').innerHTML = `
+  switchTab('concepts');
+  document.getElementById('concepts-inner').innerHTML=`
     <div class="loading">
       <div class="spinner"></div>
-      <div>Writing your scripts…</div>
+      <div class="loading-label">Developing concepts…</div>
+      <div class="loading-sub">Reading the property.<br>Coming up with angles.</div>
     </div>`;
 
-  const combos = [];
-  for (const s of styles) for (const st of structs) combos.push({ style: s, structure: st });
-
-  const propInfo = [
-    address  && `Address: ${address}`,
-    price    && `Price: ${price}`,
-    beds     && `Beds/baths: ${beds}`,
-    sqft     && `Sq ft: ${sqft}`,
-    features && `Key features: ${features}`,
-    agent    && `Agent: ${agent}`,
-    vibe     && `Neighborhood vibe: ${vibe}`,
-    extras   && `Additional: ${extras}`,
+  const propLines = [
+    brief.address   && `Address: ${brief.address}`,
+    brief.price     && `Price: ${brief.price}`,
+    brief.beds      && `Beds/baths: ${brief.beds}`,
+    brief.sqft      && `Sq ft: ${brief.sqft}`,
+    brief.type      && `Type: ${brief.type}`,
+    brief.features  && `Features: ${brief.features}`,
+    brief.vibe      && `Neighborhood: ${brief.vibe}`,
+    brief.extras    && `Notes: ${brief.extras}`,
   ].filter(Boolean).join('\n');
 
-  const styleDesc = {
-    classic: 'Professional, polished, trustworthy. Warm but not cheesy.',
-    viral:   'Hook-first. High energy. Social media optimized. Unexpected angle. Could be humorous or bold.',
-    story:   'Emotionally driven. Paint a lifestyle picture — who lives here, what mornings look like.',
-    brief:   'Ultra-short. 3–5 sentences MAX across all agent segments combined.',
-  };
-  const structDesc = {
-    intro_only: 'Agent speaks ONCE at the start only. B-roll takes over after.',
-    bookend:    'Agent speaks at START and END. B-roll fills the middle.',
-    multi:      'Agent appears 3–4 times. Include [CUT TO: location] direction notes.',
-    voiceover:  'No on-camera agent. Narration style voiceover over b-roll.',
-  };
+  const agentLines = [
+    brief.agentMode==='duo'
+      ? `Two-agent team: ${brief.agent1||'Agent 1'} and ${brief.agent2||'Agent 2'}`
+      : `Agent: ${brief.agent1||'unnamed'}`,
+    brief.agentVibe && `Agent personality/dynamic: ${brief.agentVibe}`,
+    brief.brokerage && `Brokerage: ${brief.brokerage}`,
+  ].filter(Boolean).join('\n');
 
-  const system = `You are a professional real estate video scriptwriter. Return ONLY a valid JSON array, no markdown, no backticks, no preamble.
+  const creativeLines = [
+    brief.focus.length    && `Sell: ${brief.focus.join(', ')}`,
+    brief.tone.length     && `Tone: ${brief.tone.join(', ')}`,
+    brief.structure.length && `Structure: ${brief.structure.join(', ')}`,
+    brief.spark           && `Creative spark / direction: ${brief.spark}`,
+  ].filter(Boolean).join('\n');
+
+  const system = `You are a senior real estate video creative director. You work like a film director mixed with a copywriter — you pitch bold, specific, memorable video concepts, not generic scripts.
+
+Return ONLY valid JSON. No markdown, no backticks, no extra text.
 
 Format:
-[{"style":"classic","structure":"intro_only","title":"Short title","segments":[{"tag":"AGENT — FRONT DOOR","text":"..."},{"tag":"B-ROLL","text":"[Shot suggestions]"}]}]
+[
+  {
+    "id": 1,
+    "emoji": "🎬",
+    "name": "Concept name (punchy, 3-5 words)",
+    "pitch": "One sentence that sells the concept — what makes it different and why it'll work",
+    "tags": ["tag1","tag2","tag3"],
+    "structure": "intro_only|bookend|multi|voiceover",
+    "tone": "the tone in 2-3 words",
+    "hook": "The exact opening line or moment — word for word what the agent says or what happens on screen"
+  }
+]
 
 Rules:
-- intro_only: 1–2 segments (agent open + b-roll note)
-- bookend: 3 segments (open, b-roll, close)
-- multi: 4–5 segments with [CUT TO: location] b-roll tags
-- voiceover: 2–3 segments labeled as VO, no on-camera language
-- viral: NEVER start with "welcome to"
-- brief: 3–5 sentences total across ALL agent segments
-- Write naturally, like a person actually talks
-- B-roll tags describe shots, not spoken dialogue
-- Keep it tight — no filler`;
+- Generate exactly 4 concepts
+- Concept 1: Safe and polished (professional, clean, works for any client)
+- Concept 2: Creative but sellable (unexpected angle, still approachable for most agents)
+- Concept 3: Bold/viral potential (high personality, social-first, could blow up)
+- Concept 4: Wildcard — something genuinely surprising or thematic (a running motif, a pun series, a cinematic device, a twist)
+- Each concept must feel DISTINCT — different energy, different structure, different opening
+- Tags should be short: "bookend", "duo", "voiceover", "funny", "cinematic", "emotional", etc.
+- If it's a duo, at least 2 concepts should use both agents in interesting ways
+- The hook field must be specific and word-for-word ready — not a description, the actual line
+- Use the creative spark if provided — it should influence at least one concept heavily
+- DO NOT produce generic "welcome to this beautiful home" concepts — every concept needs an angle`;
 
-  const userMsg = `Property:\n${propInfo}\n\nGenerate for:\n${combos.map(c => `- ${c.style} / ${c.structure} (${styleDesc[c.style]} | ${structDesc[c.structure]})`).join('\n')}`;
+  const userMsg = `Property:\n${propLines}\n\nAgent:\n${agentLines}\n\nCreative direction:\n${creativeLines}`;
 
   try {
-    const res = await fetch('https://api.anthropic.com/v1/messages', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'x-api-key': apiKey,
-        'anthropic-version': '2023-06-01',
-        'anthropic-dangerous-direct-browser-access': 'true',
+    const res = await fetch('https://api.anthropic.com/v1/messages',{
+      method:'POST',
+      headers:{
+        'Content-Type':'application/json',
+        'x-api-key':key,
+        'anthropic-version':'2023-06-01',
+        'anthropic-dangerous-direct-browser-access':'true',
       },
-      body: JSON.stringify({
-        model: 'claude-sonnet-4-20250514',
-        max_tokens: 4000,
+      body:JSON.stringify({
+        model:'claude-sonnet-4-20250514',
+        max_tokens:2000,
         system,
-        messages: [{ role: 'user', content: userMsg }],
+        messages:[{role:'user',content:userMsg}],
       }),
     });
-
     const data = await res.json();
-    if (data.error) throw new Error(data.error.message);
-
-    const raw = data.content.map(i => i.text || '').join('');
-    const scripts = JSON.parse(raw.replace(/```json|```/g, '').trim());
-
-    renderScripts(scripts, address || features);
-  } catch (err) {
-    document.getElementById('results').innerHTML = `
+    if(data.error) throw new Error(data.error.message);
+    const raw = data.content.map(i=>i.text||'').join('');
+    lastConcepts = JSON.parse(raw.replace(/```json|```/g,'').trim());
+    renderConcepts(lastConcepts);
+  } catch(err){
+    document.getElementById('concepts-inner').innerHTML=`
       <div class="empty">
         <div class="empty-icon">⚠️</div>
-        <div>${err.message || 'Something went wrong. Check your API key in Settings.'}</div>
+        <div>${err.message||'Something went wrong. Check your API key in Settings.'}</div>
       </div>`;
   }
 
-  btn.disabled = false; btn.textContent = 'Generate Scripts';
+  btn.disabled=false; btn.textContent='Generate Concepts →';
 }
 
-// ── RENDER SCRIPTS ────────────────────────────────────────────────────────
-function renderScripts(scripts, property) {
-  const el = document.getElementById('results');
-  el.innerHTML = '';
+// ── RENDER CONCEPTS ───────────────────────────────────────────────────────
+function renderConcepts(concepts){
+  const el = document.getElementById('concepts-inner');
+  const labels = ['Safe pick','Creative','Viral potential','Wildcard ✦'];
+  const labelColors = ['','','gold','gold'];
 
-  scripts.forEach((s, i) => {
-    const meta = STYLE_META[s.style] || { label: s.style, cls: 'b-classic' };
-    const structLabel = STRUCT_LABELS[s.structure] || s.structure;
-
-    const segsHtml = (s.segments || []).map(seg => {
-      const isBroll = /B-ROLL|CUT TO/i.test(seg.tag);
-      return `<div class="segment">
-        <div class="seg-tag">${seg.tag}</div>
-        <div class="seg-text${isBroll ? ' broll' : ''}">${seg.text}</div>
-      </div>`;
-    }).join('');
-
-    const card = document.createElement('div');
-    card.className = 'script-card';
-    card.innerHTML = `
-      <div class="card-header">
-        <div class="card-meta">
-          <div class="card-title">${s.title || meta.label}</div>
-          <div class="badge-row">
-            <span class="badge ${meta.cls}">${meta.label}</span>
-            <span class="badge b-struct">${structLabel}</span>
+  el.innerHTML = `<div style="margin-bottom:16px">
+    <div style="font-size:13px;color:var(--text2);line-height:1.5">
+      Tap <b style="color:var(--gold)">Expand into full script</b> on any concept to get the complete camera-ready script.
+    </div>
+  </div>
+  <div class="concepts">${concepts.map((c,i)=>`
+    <div class="concept-card" id="cc-${c.id}">
+      <div class="cc-header">
+        <div class="cc-emoji">${c.emoji||'🎬'}</div>
+        <div class="cc-meta">
+          <div class="cc-name">${c.name}</div>
+          <div class="cc-pitch">${c.pitch}</div>
+          <div class="cc-tags">
+            <span class="cc-tag ${labelColors[i]}">${labels[i]}</span>
+            ${(c.tags||[]).map(t=>`<span class="cc-tag">${t}</span>`).join('')}
           </div>
         </div>
-        <button class="copy-btn" onclick="copyCard(this)">Copy</button>
       </div>
-      <div class="card-body">${segsHtml}</div>`;
-
-    // Save button row
-    const saveRow = document.createElement('div');
-    saveRow.style.cssText = 'padding:0 14px 14px;';
-    saveRow.innerHTML = `<button class="copy-btn" style="width:100%;text-align:center" onclick='saveScript(${JSON.stringify(s)}, "${(property||'').replace(/"/g,'&quot;')}")'>Save script</button>`;
-    card.appendChild(saveRow);
-
-    el.appendChild(card);
-  });
+      <div style="padding:0 16px 12px">
+        <div style="font-size:10px;font-weight:700;letter-spacing:0.7px;text-transform:uppercase;color:var(--text3);margin-bottom:5px">Opening hook</div>
+        <div style="font-size:13px;color:var(--text);line-height:1.6;font-style:italic">"${c.hook}"</div>
+      </div>
+      <button class="cc-expand-btn" onclick="expandConcept(${c.id})">
+        <span>Expand into full script</span>
+        <span>→</span>
+      </button>
+    </div>`).join('')}
+  </div>`;
 }
 
-function copyCard(btn) {
-  const card = btn.closest('.script-card');
-  const title = card.querySelector('.card-title')?.textContent || '';
-  const segs = [...card.querySelectorAll('.segment')].map(s => {
-    return `[${s.querySelector('.seg-tag')?.textContent}]\n${s.querySelector('.seg-text')?.textContent}`;
-  }).join('\n\n');
-  navigator.clipboard.writeText(`${title}\n\n${segs}`).then(() => {
-    btn.textContent = 'Copied!';
-    setTimeout(() => btn.textContent = 'Copy', 2000);
-  });
+// ── EXPAND CONCEPT → FULL SCRIPT ──────────────────────────────────────────
+async function expandConcept(conceptId){
+  const key = localStorage.getItem('anthropic_key')||'';
+  const concept = lastConcepts.find(c=>c.id===conceptId);
+  if(!concept||!key) return;
+
+  const btn = document.querySelector(`#cc-${conceptId} .cc-expand-btn`);
+  const origText = btn.innerHTML;
+  btn.innerHTML = '<span>Writing script…</span><div class="spinner" style="width:16px;height:16px;border-width:2px;margin:0"></div>';
+  btn.disabled = true;
+
+  const brief = lastBrief;
+  const propLines = [
+    brief.address   && `Address: ${brief.address}`,
+    brief.price     && `Price: ${brief.price}`,
+    brief.beds      && `Beds/baths: ${brief.beds}`,
+    brief.sqft      && `Sq ft: ${brief.sqft}`,
+    brief.type      && `Type: ${brief.type}`,
+    brief.features  && `Features: ${brief.features}`,
+    brief.vibe      && `Neighborhood: ${brief.vibe}`,
+    brief.extras    && `Notes: ${brief.extras}`,
+  ].filter(Boolean).join('\n');
+
+  const agentInfo = brief.agentMode==='duo'
+    ? `Two-agent team: ${brief.agent1||'Agent 1'} and ${brief.agent2||'Agent 2'}. Dynamic: ${brief.agentVibe||'unspecified'}.`
+    : `Agent: ${brief.agent1||'unnamed'}. Personality: ${brief.agentVibe||'unspecified'}.`;
+
+  const system = `You are a professional real estate video scriptwriter. Write camera-ready scripts that are specific, natural, and match the creative concept exactly.
+
+Return ONLY valid JSON. No markdown, no backticks.
+
+Format:
+{
+  "title": "concept name",
+  "pitch": "one-line pitch",
+  "segments": [
+    {
+      "tag": "AGENT — FRONT DOOR",
+      "type": "agent|broll|vo",
+      "text": "Exact spoken dialogue or b-roll description",
+      "note": "Optional director note for delivery or camera"
+    }
+  ]
 }
 
-// ── SAVED SCRIPTS ─────────────────────────────────────────────────────────
-function saveScript(script, property) {
-  const saved = JSON.parse(localStorage.getItem('saved_scripts') || '[]');
-  saved.unshift({ script, property, date: new Date().toLocaleDateString() });
-  localStorage.setItem('saved_scripts', JSON.stringify(saved.slice(0, 50)));
-  showToast('Script saved');
-}
+Rules:
+- Write exactly what the agent says — word for word, natural speech, how a real person talks
+- B-roll segments describe shots and pacing, not spoken words — use [brackets] for action notes
+- Director notes go in the note field — keep them short and practical
+- Match the tone and structure of the concept exactly
+- If it's a duo, write lines for BOTH agents — label them by name in the text
+- If it's themed or uses a motif, carry it through the whole script
+- Segments: intro_only=2, bookend=3, multi=4-6, voiceover=3-4
+- No generic filler. Every line should earn its place.`;
 
-function renderSaved() {
-  const saved = JSON.parse(localStorage.getItem('saved_scripts') || '[]');
-  const el = document.getElementById('saved-list');
+  const userMsg = `Property:\n${propLines}\n\nAgent: ${agentInfo}\n\nConcept to expand:\nName: ${concept.name}\nPitch: ${concept.pitch}\nTone: ${concept.tone}\nStructure: ${concept.structure}\nOpening hook: "${concept.hook}"\n\nWrite the full script for this concept.`;
 
-  if (!saved.length) {
-    el.innerHTML = '<div class="saved-empty">No saved scripts yet.<br>Generate some and tap "Save script".</div>';
-    return;
+  try {
+    const res = await fetch('https://api.anthropic.com/v1/messages',{
+      method:'POST',
+      headers:{
+        'Content-Type':'application/json',
+        'x-api-key':key,
+        'anthropic-version':'2023-06-01',
+        'anthropic-dangerous-direct-browser-access':'true',
+      },
+      body:JSON.stringify({
+        model:'claude-sonnet-4-20250514',
+        max_tokens:2000,
+        system,
+        messages:[{role:'user',content:userMsg}],
+      }),
+    });
+    const data = await res.json();
+    if(data.error) throw new Error(data.error.message);
+    const raw = data.content.map(i=>i.text||'').join('');
+    const script = JSON.parse(raw.replace(/```json|```/g,'').trim());
+    showScriptSheet(script, concept);
+  } catch(err){
+    toast('Error: '+( err.message||'try again'));
   }
 
-  el.innerHTML = saved.map((item, i) => {
-    const meta = STYLE_META[item.script.style] || { label: item.script.style, cls: 'b-classic' };
-    const structLabel = STRUCT_LABELS[item.script.structure] || item.script.structure;
-    return `<div class="saved-card" onclick="viewSaved(${i})">
-      <div class="saved-card-title">${item.script.title || meta.label}</div>
-      <div class="saved-card-meta">${item.property || 'No address'} · ${item.date}</div>
-      <div class="badge-row" style="margin-top:6px">
-        <span class="badge ${meta.cls}">${meta.label}</span>
-        <span class="badge b-struct">${structLabel}</span>
-      </div>
-      <button class="delete-btn" onclick="deleteSaved(event,${i})">Delete</button>
-    </div>`;
-  }).join('');
+  btn.innerHTML = origText;
+  btn.disabled = false;
 }
 
-function viewSaved(i) {
-  const saved = JSON.parse(localStorage.getItem('saved_scripts') || '[]');
-  const { script } = saved[i];
-  const segsHtml = (script.segments || []).map(seg => {
-    const isBroll = /B-ROLL|CUT TO/i.test(seg.tag);
-    return `<div class="segment">
+// ── SHOW SCRIPT SHEET ─────────────────────────────────────────────────────
+function showScriptSheet(script, concept){
+  const segsHtml = (script.segments||[]).map(seg=>{
+    const isBroll = seg.type==='broll';
+    const isVo    = seg.type==='vo';
+    const cls     = isBroll||isVo ? 'broll-seg' : 'agent-seg';
+    return `<div class="seg ${cls}">
       <div class="seg-tag">${seg.tag}</div>
-      <div class="seg-text${isBroll ? ' broll' : ''}">${seg.text}</div>
+      <div class="seg-text${isBroll||isVo?' broll':''}">${seg.text}</div>
+      ${seg.note?`<div class="seg-note">↳ ${seg.note}</div>`:''}
     </div>`;
   }).join('');
 
-  document.getElementById('view-sheet-content').innerHTML = `
-    <div class="card-title" style="font-size:16px;margin-bottom:12px">${script.title || ''}</div>
-    ${segsHtml}`;
-  document.getElementById('view-overlay').classList.add('show');
+  const saved = JSON.stringify({script, concept, property: lastBrief.address||lastBrief.features, date: new Date().toLocaleDateString()});
+
+  document.getElementById('script-sheet-body').innerHTML = `
+    <div class="script-view" style="border:none;background:transparent">
+      <div class="sv-header">
+        <div class="sv-title">${concept.emoji||'🎬'} ${script.title||concept.name}</div>
+        <div class="sv-pitch">${script.pitch||concept.pitch}</div>
+      </div>
+      <div class="sv-body">${segsHtml}</div>
+      <div class="sv-actions">
+        <button class="sv-btn primary" onclick="copyScript(this)">Copy script</button>
+        <button class="sv-btn secondary" onclick='saveScript(${saved.replace(/'/g,"&apos;")})'>Save</button>
+      </div>
+    </div>`;
+
+  document.getElementById('script-overlay').classList.add('show');
 }
 
-function deleteSaved(e, i) {
+function copyScript(btn){
+  const segs = [...document.querySelectorAll('#script-sheet-body .seg')].map(s=>{
+    const tag  = s.querySelector('.seg-tag')?.textContent||'';
+    const text = s.querySelector('.seg-text')?.textContent||'';
+    const note = s.querySelector('.seg-note')?.textContent||'';
+    return `[${tag}]\n${text}${note?'\n'+note:''}`;
+  }).join('\n\n');
+  const title = document.querySelector('#script-sheet-body .sv-title')?.textContent||'Script';
+  navigator.clipboard.writeText(`${title}\n\n${segs}`).then(()=>{
+    btn.textContent='Copied!';
+    setTimeout(()=>btn.textContent='Copy script',2000);
+  });
+}
+
+// ── SAVE / SAVED ──────────────────────────────────────────────────────────
+function saveScript(dataStr){
+  let data;
+  try { data = typeof dataStr==='string' ? JSON.parse(dataStr.replace(/&apos;/g,"'")) : dataStr; }
+  catch(e){ toast('Save error'); return; }
+  const saved = JSON.parse(localStorage.getItem('saved_scripts')||'[]');
+  saved.unshift(data);
+  localStorage.setItem('saved_scripts', JSON.stringify(saved.slice(0,60)));
+  toast('Saved ✓');
+}
+
+function renderSaved(){
+  const saved = JSON.parse(localStorage.getItem('saved_scripts')||'[]');
+  const el = document.getElementById('saved-list');
+  if(!saved.length){
+    el.innerHTML='<div class="empty"><div class="empty-icon">✦</div><div>No saved scripts yet.<br>Expand a concept and tap Save.</div></div>';
+    return;
+  }
+  el.innerHTML = saved.map((item,i)=>`
+    <div class="saved-card" onclick="viewSaved(${i})">
+      <div class="saved-title">${item.concept?.emoji||'🎬'} ${item.script?.title||item.concept?.name||'Script'}</div>
+      <div class="saved-meta">${item.property||'No address'} · ${item.date||''}</div>
+      <button class="saved-del" onclick="deleteSaved(event,${i})">Delete</button>
+    </div>`).join('');
+}
+
+function viewSaved(i){
+  const saved = JSON.parse(localStorage.getItem('saved_scripts')||'[]');
+  const item = saved[i];
+  if(item) showScriptSheet(item.script, item.concept||{name:'Saved Script',emoji:'🎬',pitch:''});
+}
+
+function deleteSaved(e,i){
   e.stopPropagation();
-  const saved = JSON.parse(localStorage.getItem('saved_scripts') || '[]');
-  saved.splice(i, 1);
-  localStorage.setItem('saved_scripts', JSON.stringify(saved));
+  const saved = JSON.parse(localStorage.getItem('saved_scripts')||'[]');
+  saved.splice(i,1);
+  localStorage.setItem('saved_scripts',JSON.stringify(saved));
   renderSaved();
 }
 
 // ── TOAST ─────────────────────────────────────────────────────────────────
-function showToast(msg) {
+function toast(msg){
   const t = document.createElement('div');
-  t.textContent = msg;
-  t.style.cssText = `position:fixed;bottom:calc(var(--safe-bot,0px) + 80px);left:50%;transform:translateX(-50%);
-    background:var(--text);color:var(--bg);padding:10px 18px;border-radius:999px;
-    font-size:13px;font-weight:500;z-index:200;pointer-events:none;
-    animation:fadeup 0.2s ease;white-space:nowrap`;
+  t.className='toast'; t.textContent=msg;
   document.body.appendChild(t);
-  setTimeout(() => t.remove(), 2200);
+  setTimeout(()=>t.remove(),2200);
 }
 
-const style = document.createElement('style');
-style.textContent = `@keyframes fadeup{from{opacity:0;transform:translate(-50%,8px)}to{opacity:1;transform:translate(-50%,0)}}`;
-document.head.appendChild(style);
-
-// ── LOAD ──────────────────────────────────────────────────────────────────
-window.addEventListener('load', () => {
+// ── INIT ──────────────────────────────────────────────────────────────────
+window.addEventListener('load',()=>{
   const agent = localStorage.getItem('default_agent');
-  if (agent) document.getElementById('f-agent').value = agent;
-  if (!localStorage.getItem('anthropic_key')) {
-    setTimeout(() => {
-      showToast('Tap ⚙️ to add your API key');
-    }, 800);
-  }
+  if(agent){ document.getElementById('f-agent1').value=agent; document.getElementById('f-agent1b').value=agent; }
+  if(!localStorage.getItem('anthropic_key')) setTimeout(()=>toast('Tap ⚙ to add your API key'),800);
 });
 </script>
 </body>
