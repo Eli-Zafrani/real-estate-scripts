@@ -435,7 +435,7 @@ select option{background:var(--bg3);}
   <div class="hdr">
     <div class="hdr-left">
       <div class="hdr-title">Pick Three <span>Scripts</span></div>
-      <div class="hdr-sub">Real estate video concepts · v8</div>
+      <div class="hdr-sub">Real estate video concepts · v11</div>
     </div>
     <div class="icon-btn" onclick="openSettings()">⚙</div>
   </div>
@@ -621,11 +621,43 @@ select option{background:var(--bg3);}
         </div>
 
         <label class="field-label" style="margin-bottom:8px">Video structure</label>
-        <div class="chips" id="struct-chips" style="margin-bottom:16px">
+        <div class="chips" id="struct-chips" style="margin-bottom:8px">
           <div class="chip on" data-val="intro_only">Intro only</div>
           <div class="chip" data-val="bookend">Bookend</div>
           <div class="chip" data-val="multi">Multi-segment</div>
           <div class="chip" data-val="voiceover">Voiceover</div>
+        </div>
+
+        <!-- MULTI-SEGMENT OPTIONS — shown only when multi is selected -->
+        <div id="multi-options" style="display:none;background:var(--bg2);border:0.5px solid var(--border2);border-radius:var(--rsm);padding:12px 14px;margin-bottom:16px">
+          <div style="font-size:11px;font-weight:700;color:var(--gold);text-transform:uppercase;letter-spacing:0.6px;margin-bottom:10px">Multi-segment settings</div>
+          <div style="display:flex;gap:16px;flex-wrap:wrap">
+            <div style="flex:1;min-width:120px">
+              <label class="field-label" style="margin-bottom:6px">Appearances</label>
+              <div class="chips" id="multi-appearances">
+                <div class="chip" data-val="2">2×</div>
+                <div class="chip on" data-val="3">3×</div>
+                <div class="chip" data-val="4">4×</div>
+              </div>
+            </div>
+            <div style="flex:1;min-width:120px">
+              <label class="field-label" style="margin-bottom:6px">Lines each</label>
+              <div class="chips" id="multi-lines">
+                <div class="chip on" data-val="1">1 line</div>
+                <div class="chip" data-val="2">2 lines</div>
+                <div class="chip" data-val="3">3 lines</div>
+              </div>
+            </div>
+          </div>
+          <div id="multi-calc" style="font-size:11px;color:var(--text3);margin-top:10px">~3 appearances × 1 line ≈ 24 spoken words</div>
+          <div id="multi-duo-options" style="display:none;margin-top:10px">
+            <label class="field-label" style="margin-bottom:6px">Duo arrangement</label>
+            <div class="chips" id="multi-duo-style">
+              <div class="chip on" data-val="alternating">Alternating (A, B, A, B)</div>
+              <div class="chip" data-val="split">Split (A first half, B second)</div>
+              <div class="chip" data-val="together">Together each time</div>
+            </div>
+          </div>
         </div>
 
         <label class="field-label" style="margin-bottom:8px">Target video length</label>
@@ -1129,9 +1161,48 @@ function switchTab(t){
 
 // ── CHIPS (multi) ─────────────────────────────────────────────────────────
 document.querySelectorAll('#focus-chips .chip, #tone-chips .chip, #struct-chips .chip').forEach(c=>{
-  c.addEventListener('click',()=>c.classList.toggle('on'));
+  c.addEventListener('click',()=>{
+    c.classList.toggle('on');
+    // Show/hide multi-segment options
+    if(c.closest('#struct-chips')){
+      const multiOn = !!document.querySelector('#struct-chips .chip.on[data-val="multi"]');
+      document.getElementById('multi-options').style.display = multiOn ? '' : 'none';
+      updateMultiCalc();
+    }
+  });
 });
 function getChips(id){ return [...document.querySelectorAll('#'+id+' .chip.on')].map(c=>c.dataset.val); }
+
+// ── MULTI-SEGMENT SINGLE-SELECT CHIPS ─────────────────────────────────────
+['multi-appearances','multi-lines','multi-duo-style'].forEach(function(id){
+  const el = document.getElementById(id);
+  if(!el) return;
+  el.querySelectorAll('.chip').forEach(function(c){
+    c.addEventListener('click',function(){
+      el.querySelectorAll('.chip').forEach(x=>x.classList.remove('on'));
+      c.classList.add('on');
+      updateMultiCalc();
+    });
+  });
+});
+
+function getMultiVal(id){
+  const el = document.querySelector('#'+id+' .chip.on');
+  return el ? el.dataset.val : null;
+}
+
+function updateMultiCalc(){
+  const appearances = parseInt(getMultiVal('multi-appearances')||'3');
+  const lines = parseInt(getMultiVal('multi-lines')||'1');
+  const wordsPerLine = 10;
+  const total = appearances * lines * wordsPerLine;
+  const secs = Math.round(total / 130 * 60);
+  const calc = document.getElementById('multi-calc');
+  if(calc) calc.textContent = '~'+appearances+' appearances × '+lines+' line'+(lines>1?'s':'')+' each ≈ '+total+' spoken words ('+secs+' sec of dialogue)';
+  // Show duo options if duo mode
+  const duoOpts = document.getElementById('multi-duo-options');
+  if(duoOpts) duoOpts.style.display = agentMode==='duo' ? '' : 'none';
+}
 
 // ── LENGTH CHIPS (single-select) ──────────────────────────────────────────
 document.querySelectorAll('#length-chips .chip').forEach(c=>{
@@ -1202,6 +1273,7 @@ function setAgentMode(mode){
   document.querySelectorAll('#agent-toggle .atoggle').forEach(a=>a.classList.toggle('sel',a.dataset.val===mode));
   document.getElementById('agent-solo').style.display = mode==='solo'?'':'none';
   document.getElementById('agent-duo').style.display  = mode==='duo'?'':'none';
+  updateMultiCalc();
 }
 
 // ── BUILD BRIEF ───────────────────────────────────────────────────────────
@@ -1234,6 +1306,9 @@ function buildBrief(){
     propertyType: selectedPropertyType,
     propertyTypeData: selectedPropertyType ? TYPE_PRESETS[selectedPropertyType] : null,
     platform:   getPlatform(),
+    multiAppearances: parseInt(getMultiVal('multi-appearances')||'3'),
+    multiLines:       parseInt(getMultiVal('multi-lines')||'1'),
+    multiDuoStyle:    getMultiVal('multi-duo-style')||'alternating',
   };
 }
 
@@ -1329,7 +1404,8 @@ ${brief.nervousMode ? '- NERVOUS AGENT MODE: Max 2 sentences spoken total. Super
 - AGENT CAMERA COMFORT: ${getCameraComfortText()} — every concept must be written to match this comfort level
 ${brief.edge ? '- LISTING EDGE — anchor EVERY concept around this differentiator: "' + brief.edge + '"' : ''}
 ${brief.propertyTypeData ? '- PROPERTY TYPE: ' + brief.propertyTypeData.type + '. Best angles: ' + brief.propertyTypeData.angles + '. Creative direction: ' + brief.propertyTypeData.scriptTip : ''}
-- PLATFORM: ${brief.platform||'reels'} — ${getPlatformContext(brief.platform||'reels')}`;
+- PLATFORM: ${brief.platform||'reels'} — ${getPlatformContext(brief.platform||'reels')}
+${structure==='multi' ? '- MULTI-SEGMENT: exactly '+brief.multiAppearances+' agent appearances, '+brief.multiLines+' line'+(brief.multiLines>1?'s':'')+' each'+(brief.agentMode==='duo'?' | duo: '+brief.multiDuoStyle:'') : ''}`;
 
   const userMsg = (structure) => 'Property:\n' + propLines + '\n\nAgent:\n' + agentLines + '\n\nCreative direction:\n' +
     'Platform: ' + (brief.platform||'reels') + '\n' +
@@ -1525,7 +1601,8 @@ Rules:
 ${brief.nervousMode ? '- NERVOUS AGENT MODE ACTIVE: Agent speaks ONCE only, MAX 2 sentences, MAX 20 words total. Hard ceiling.' : ''}
 ${brief.edge ? '- LISTING EDGE: "' + brief.edge + '" — this must come through clearly somewhere in the script' : ''}
 ${brief.propertyTypeData ? '- PROPERTY TYPE: ' + brief.propertyTypeData.type + '. ' + brief.propertyTypeData.scriptTip : ''}
-- PLATFORM: ${brief.platform||'reels'} — ${getPlatformContext(brief.platform||'reels')}`;
+- PLATFORM: ${brief.platform||'reels'} — ${getPlatformContext(brief.platform||'reels')}
+${brief.structure&&brief.structure.includes('multi') ? '- MULTI-SEGMENT: exactly '+brief.multiAppearances+' appearances, '+brief.multiLines+' line'+(brief.multiLines>1?'s':'')+' each'+(brief.agentMode==='duo'?' | duo: '+brief.multiDuoStyle:'') : ''}`;
 
   const userMsg = 'Property:\n' + propLines + '\n\nAgent: ' + agentInfo + '\n\nPlatform: ' + (brief.platform||'reels') + '\nTarget length: ' + (brief.videoLength||60) + ' seconds (STRICT — max ' + wordLimits.total + ' spoken words total)\n' + (brief.edge ? '\nKey differentiator: ' + brief.edge : '') + '\n\nConcept to expand:\nName: ' + concept.name + '\nPitch: ' + concept.pitch + '\nTone: ' + concept.tone + '\nStructure: ' + concept.structure + '\nOpening hook: "' + concept.hook + '"\n\nWrite the full script. Count your words. Stay under the limit.';
 
