@@ -842,12 +842,14 @@ function renderAgentProfileChips(){
   const profiles = getAgentProfiles();
   const container = document.getElementById('agent-profile-chips');
   if(!container) return;
-  container.innerHTML = profiles.length
-    ? profiles.map((p,i)=>`
-        <div class="profile-chip" data-idx="${i}" onclick="loadAgentProfile(${i})">${p.label}
-          <span onclick="deleteAgentProfile(event,${i})" style="margin-left:6px;opacity:0.5;font-size:11px">✕</span>
-        </div>`).join('')
-    : `<div style="font-size:12px;color:var(--text3);padding:6px 0">No saved agents yet</div>`;
+  if(!profiles.length){
+    container.innerHTML = '<div style="font-size:12px;color:var(--text3);padding:6px 0">No saved agents yet</div>';
+    return;
+  }
+  container.innerHTML = profiles.map(function(p,i){
+    return '<div class="profile-chip" data-idx="'+i+'" onclick="loadAgentProfile('+i+')">'+p.label+
+      '<span onclick="deleteAgentProfile(event,'+i+')" style="margin-left:6px;opacity:0.5;font-size:11px">✕</span></div>';
+  }).join('');
 }
 
 function loadAgentProfile(i){
@@ -1057,23 +1059,28 @@ function openShotList(script, property){
   const allShots = {
     'Always get': always,
     'From this script': fromScript.length ? fromScript : ['Interior walkthrough — living room','Kitchen','Primary bedroom','Bathrooms'],
-    'Agent on camera': (script.segments||[]).filter(s=>s.type==='agent').map((s,i)=>`Agent segment ${i+1} — ${s.tag}`),
+    'Agent on camera': (script.segments||[]).filter(s=>s.type==='agent').map(function(s,i){ return 'Agent segment '+(i+1)+' — '+s.tag; }),
     'Finish strong': cta,
   };
 
   const body = document.getElementById('shotlist-body');
-  body.innerHTML = Object.entries(allShots).map(([cat, shots])=>`
-    <div class="shot-category">${cat}</div>
-    <div class="shot-list">
-      ${shots.map((shot,i)=>{
-        const key = cat+i;
-        const done = shotChecks[key]||false;
-        return `<div class="shot-item">
-          <div class="shot-check${done?' done':''}" onclick="toggleShot('${key}',this)">${done?'✓':''}</div>
-          <div class="shot-text${done?' done':''}" id="stext-${key}">${shot}</div>
-        </div>`;
-      }).join('')}
-    </div>`).join('');
+  let shotHtml = '';
+  Object.entries(allShots).forEach(function(entry){
+    const cat = entry[0], shots = entry[1];
+    shotHtml += '<div class="shot-category">'+cat+'</div><div class="shot-list">';
+    shots.forEach(function(shot,i){
+      const key = cat+i;
+      const done = shotChecks[key]||false;
+      const checkClass = done ? 'shot-check done' : 'shot-check';
+      const textClass  = done ? 'shot-text done'  : 'shot-text';
+      shotHtml += '<div class="shot-item">';
+      shotHtml += '<div class="'+checkClass+'" data-key="'+key+'" onclick="toggleShot(this.dataset.key,this)">'+(done?'&#10003;':'')+'</div>';
+      shotHtml += '<div class="'+textClass+'" id="stext-'+key+'">'+shot+'</div>';
+      shotHtml += '</div>';
+    });
+    shotHtml += '</div>';
+  });
+  body.innerHTML = shotHtml;
 
   document.getElementById('shotlist-overlay').classList.add('show');
 }
@@ -1121,7 +1128,7 @@ function switchTab(t){
 document.querySelectorAll('#focus-chips .chip, #tone-chips .chip, #struct-chips .chip').forEach(c=>{
   c.addEventListener('click',()=>c.classList.toggle('on'));
 });
-function getChips(id){ return [...document.querySelectorAll(`#${id} .chip.on`)].map(c=>c.dataset.val); }
+function getChips(id){ return [...document.querySelectorAll('#'+id+' .chip.on')].map(c=>c.dataset.val); }
 
 // ── LENGTH CHIPS (single-select) ──────────────────────────────────────────
 document.querySelectorAll('#length-chips .chip').forEach(c=>{
@@ -1174,10 +1181,8 @@ async function scoreHooks(concepts, key){
       body:JSON.stringify({
         model:'claude-sonnet-4-20250514',
         max_tokens:500,
-        system:`You score real estate video hooks. Return ONLY valid JSON array. No markdown.
-Format: [{"id": 1, "score": 4, "reason": "one short sentence why"}]
-Score 1-5: 1=generic/boring, 3=solid, 5=scroll-stopping/memorable. Be honest and critical.`,
-        messages:[{role:'user',content:`Score these hooks:\n${JSON.stringify(hooks)}`}],
+        system:'You score real estate video hooks. Return ONLY valid JSON array. No markdown.\nFormat: [{"id": 1, "score": 4, "reason": "one short sentence why"}]\nScore 1-5: 1=generic/boring, 3=solid, 5=scroll-stopping/memorable. Be honest and critical.',
+        messages:[{role:'user',content:'Score these hooks:\n'+JSON.stringify(hooks)}],
       }),
     });
     const data = await res.json();
@@ -1319,19 +1324,18 @@ Rules:
 ${brief.nervousMode ? '- NERVOUS AGENT MODE: Max 2 sentences spoken total. Super short.' : ''}
 - WORD LIMIT: ${wordLimits.note}
 - AGENT CAMERA COMFORT: ${getCameraComfortText()} — every concept must be written to match this comfort level
-${brief.edge ? `- ⚡ LISTING EDGE — anchor EVERY concept around this differentiator: "${brief.edge}"` : ''}
-${brief.propertyTypeData ? `- PROPERTY TYPE: ${brief.propertyTypeData.type}. Best angles: ${brief.propertyTypeData.angles}. Creative direction: ${brief.propertyTypeData.scriptTip}` : ''}
+${brief.edge ? '- LISTING EDGE — anchor EVERY concept around this differentiator: "' + brief.edge + '"' : ''}
+${brief.propertyTypeData ? '- PROPERTY TYPE: ' + brief.propertyTypeData.type + '. Best angles: ' + brief.propertyTypeData.angles + '. Creative direction: ' + brief.propertyTypeData.scriptTip : ''}
 - PLATFORM: ${brief.platform||'reels'} — ${getPlatformContext(brief.platform||'reels')}`;
 
-  const userMsg = (structure) => `Property:\n${propLines}\n\nAgent:\n${agentLines}\n\nCreative direction:
-Platform: ${brief.platform||'reels'}
-Focus: ${brief.focus.join(', ')||'the house'}
-Tone: ${brief.tone.join(', ')||'professional'}
-Video length: ${brief.videoLength} seconds
-${brief.spark ? `Creative spark: ${brief.spark}` : ''}
-${brief.edge ? `What makes this listing stand out: ${brief.edge}` : ''}
-
-Generate 4 concepts all using "${STRUCT_NAMES[structure]}" structure.`;
+  const userMsg = (structure) => 'Property:\n' + propLines + '\n\nAgent:\n' + agentLines + '\n\nCreative direction:\n' +
+    'Platform: ' + (brief.platform||'reels') + '\n' +
+    'Focus: ' + (brief.focus.join(', ')||'the house') + '\n' +
+    'Tone: ' + (brief.tone.join(', ')||'professional') + '\n' +
+    'Video length: ' + brief.videoLength + ' seconds\n' +
+    (brief.spark ? 'Creative spark: ' + brief.spark + '\n' : '') +
+    (brief.edge ? 'What makes this listing stand out: ' + brief.edge + '\n' : '') +
+    '\nGenerate 4 concepts all using "' + STRUCT_NAMES[structure] + '" structure.';
 
   // Fire all structure calls in parallel
   try {
@@ -1380,17 +1384,19 @@ Generate 4 concepts all using "${STRUCT_NAMES[structure]}" structure.`;
     renderConcepts(results);
     scoreHooks(lastConcepts, key).then(scored => {
       lastConcepts = scored;
-      // Update score bars on already-rendered cards
-      scored.forEach(c => {
+      scored.forEach(function(c){
         if(!c.hookScore) return;
-        const card = document.getElementById(`cc-${c.id}`);
+        const card = document.getElementById('cc-'+c.id);
         if(!card) return;
         const scoreEl = card.querySelector('.hook-score-bar');
         if(scoreEl){
-          scoreEl.innerHTML = `<div style="display:flex;align-items:center;gap:5px;margin-top:4px">
-            ${[1,2,3,4,5].map(i=>`<div style="width:14px;height:3px;border-radius:2px;background:${i<=c.hookScore?'var(--gold)':'var(--bg4)'}"></div>`).join('')}
-            <span style="font-size:10px;color:var(--text3)">${c.hookScore}/5</span>
-          </div>`;
+          let bars = '';
+          for(let i=1;i<=5;i++){
+            bars += '<div style="width:14px;height:3px;border-radius:2px;background:'+(i<=c.hookScore?'var(--gold)':'var(--bg4)')+'"></div>';
+          }
+          scoreEl.innerHTML = '<div style="display:flex;align-items:center;gap:5px;margin-top:4px">'
+            + bars
+            + '<span style="font-size:10px;color:var(--text3)">'+c.hookScore+'/5</span></div>';
         }
       });
     });
@@ -1413,41 +1419,44 @@ function renderConcepts(groups){
   const labelColors = ['','','gold','gold'];
   const totalConcepts = groups.reduce((a,g)=>a+g.concepts.length,0);
 
-  el.innerHTML = `<div style="margin-bottom:16px;font-size:13px;color:var(--text2);line-height:1.5">
-    ${totalConcepts} concepts generated. Tap <b style="color:var(--gold)">Expand into full script</b> on any to get the camera-ready script.
-  </div>` + groups.map(group => `
-    <div style="margin-bottom:28px">
-      <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px">
-        <div style="font-size:11px;font-weight:700;letter-spacing:0.8px;text-transform:uppercase;color:var(--gold)">${STRUCT_NAMES[group.structure]||group.structure}</div>
-        <div style="flex:1;height:0.5px;background:var(--border)"></div>
-        <div style="font-size:11px;color:var(--text3)">${STRUCT_DESC[group.structure]?.split('—')[0]?.trim()||''}</div>
-      </div>
-      <div class="concepts">
-        ${group.concepts.map((c,i)=>`
-        <div class="concept-card" id="cc-${c.id}">
-          <div class="cc-header">
-            <div class="cc-emoji">${c.emoji||'🎬'}</div>
-            <div class="cc-meta">
-              <div class="cc-name">${c.name}</div>
-              <div class="cc-pitch">${c.pitch}</div>
-              <div class="cc-tags">
-                <span class="cc-tag ${labelColors[i]||''}">${labels[i]||''}</span>
-                ${(c.tags||[]).map(t=>`<span class="cc-tag">${t}</span>`).join('')}
-              </div>
-              <div class="hook-score-bar"></div>
-            </div>
-          </div>
-          <div style="padding:0 16px 12px">
-            <div style="font-size:10px;font-weight:700;letter-spacing:0.7px;text-transform:uppercase;color:var(--text3);margin-bottom:5px">Opening hook</div>
-            <div style="font-size:13px;color:var(--text);line-height:1.6;font-style:italic">"${c.hook}"</div>
-          </div>
-          <button class="cc-expand-btn" onclick="expandConcept(${c.id})">
-            <span>Expand into full script</span>
-            <span>→</span>
-          </button>
-        </div>`).join('')}
-      </div>
-    </div>`).join('');
+  let html = '<div style="margin-bottom:16px;font-size:13px;color:var(--text2);line-height:1.5">'
+    + totalConcepts + ' concepts generated. Tap <b style="color:var(--gold)">Expand into full script</b> on any to get the camera-ready script.</div>';
+
+  groups.forEach(function(group){
+    const structName = STRUCT_NAMES[group.structure]||group.structure;
+    const structDesc = (STRUCT_DESC[group.structure]||'').split('—')[0].trim();
+    html += '<div style="margin-bottom:28px">';
+    html += '<div style="display:flex;align-items:center;gap:10px;margin-bottom:12px">';
+    html += '<div style="font-size:11px;font-weight:700;letter-spacing:0.8px;text-transform:uppercase;color:var(--gold)">'+structName+'</div>';
+    html += '<div style="flex:1;height:0.5px;background:var(--border)"></div>';
+    html += '<div style="font-size:11px;color:var(--text3)">'+structDesc+'</div>';
+    html += '</div><div class="concepts">';
+
+    group.concepts.forEach(function(c,i){
+      const tagColor = labelColors[i]||'';
+      const label = labels[i]||'';
+      const tagsHtml = (c.tags||[]).map(function(t){ return '<span class="cc-tag">'+t+'</span>'; }).join('');
+      html += '<div class="concept-card" id="cc-'+c.id+'">';
+      html += '<div class="cc-header">';
+      html += '<div class="cc-emoji">'+(c.emoji||'🎬')+'</div>';
+      html += '<div class="cc-meta">';
+      html += '<div class="cc-name">'+c.name+'</div>';
+      html += '<div class="cc-pitch">'+c.pitch+'</div>';
+      html += '<div class="cc-tags"><span class="cc-tag '+tagColor+'">'+label+'</span>'+tagsHtml+'</div>';
+      html += '<div class="hook-score-bar"></div>';
+      html += '</div></div>';
+      html += '<div style="padding:0 16px 12px">';
+      html += '<div style="font-size:10px;font-weight:700;letter-spacing:0.7px;text-transform:uppercase;color:var(--text3);margin-bottom:5px">Opening hook</div>';
+      html += '<div style="font-size:13px;color:var(--text);line-height:1.6;font-style:italic">&ldquo;'+c.hook+'&rdquo;</div>';
+      html += '</div>';
+      html += '<button class="cc-expand-btn" onclick="expandConcept('+c.id+')">';
+      html += '<span>Expand into full script</span><span>→</span></button>';
+      html += '</div>';
+    });
+    html += '</div></div>';
+  });
+
+  el.innerHTML = html;
 }
 
 // ── EXPAND CONCEPT → FULL SCRIPT ──────────────────────────────────────────
@@ -1456,7 +1465,7 @@ async function expandConcept(conceptId){
   const concept = lastConcepts.find(c=>c.id===conceptId);
   if(!concept||!key) return;
 
-  const btn = document.querySelector(`#cc-${conceptId} .cc-expand-btn`);
+  const btn = document.querySelector('#cc-'+conceptId+' .cc-expand-btn');
   const origText = btn.innerHTML;
   btn.innerHTML = '<span>Writing script…</span><div class="spinner" style="width:16px;height:16px;border-width:2px;margin:0"></div>';
   btn.disabled = true;
@@ -1511,11 +1520,11 @@ Rules:
 - Per agent segment: MAX ${wordLimits.perSegment} spoken words. Count them. Cut ruthlessly if over.
 - AGENT CAMERA COMFORT: ${getCameraComfortText()} — the actual dialogue must reflect this
 ${brief.nervousMode ? '- NERVOUS AGENT MODE ACTIVE: Agent speaks ONCE only, MAX 2 sentences, MAX 20 words total. Hard ceiling.' : ''}
-${brief.edge ? `- ⚡ LISTING EDGE: "${brief.edge}" — this must come through clearly somewhere in the script` : ''}
-${brief.propertyTypeData ? `- PROPERTY TYPE: ${brief.propertyTypeData.type}. ${brief.propertyTypeData.scriptTip}` : ''}
+${brief.edge ? '- LISTING EDGE: "' + brief.edge + '" — this must come through clearly somewhere in the script' : ''}
+${brief.propertyTypeData ? '- PROPERTY TYPE: ' + brief.propertyTypeData.type + '. ' + brief.propertyTypeData.scriptTip : ''}
 - PLATFORM: ${brief.platform||'reels'} — ${getPlatformContext(brief.platform||'reels')}`;
 
-  const userMsg = `Property:\n${propLines}\n\nAgent: ${agentInfo}\n\nPlatform: ${brief.platform||'reels'}\nTarget length: ${brief.videoLength || 60} seconds (STRICT — max ${wordLimits.total} spoken words total)\n${brief.edge ? `\nKey differentiator: ${brief.edge}` : ''}\n\nConcept to expand:\nName: ${concept.name}\nPitch: ${concept.pitch}\nTone: ${concept.tone}\nStructure: ${concept.structure}\nOpening hook: "${concept.hook}"\n\nWrite the full script. Count your words. Stay under the limit.`;
+  const userMsg = 'Property:\n' + propLines + '\n\nAgent: ' + agentInfo + '\n\nPlatform: ' + (brief.platform||'reels') + '\nTarget length: ' + (brief.videoLength||60) + ' seconds (STRICT — max ' + wordLimits.total + ' spoken words total)\n' + (brief.edge ? '\nKey differentiator: ' + brief.edge : '') + '\n\nConcept to expand:\nName: ' + concept.name + '\nPitch: ' + concept.pitch + '\nTone: ' + concept.tone + '\nStructure: ' + concept.structure + '\nOpening hook: "' + concept.hook + '"\n\nWrite the full script. Count your words. Stay under the limit.';
 
   try {
     const res = await fetch('https://api.anthropic.com/v1/messages',{
@@ -1563,63 +1572,66 @@ function showScriptSheet(script, concept){
   const videoLen = lastBrief.videoLength||60;
   const wl = getWordLimits(videoLen);
   const overLimit = spokenWords > wl.total;
-  const wordCountHtml = `<div style="margin-top:8px;font-size:11px;font-weight:600;color:${overLimit?'#C0392B':'var(--gold)'}">
-    ${spokenWords} spoken words · target ${videoLen}s (max ${wl.total})${overLimit?' — over limit ⚠️':''}
-  </div>`;
+  const wordColor = overLimit ? '#C0392B' : 'var(--gold)';
+  const wordCountHtml = '<div style="margin-top:8px;font-size:11px;font-weight:600;color:'+wordColor+'">'
+    + spokenWords + ' spoken words · target ' + videoLen + 's (max ' + wl.total + ')'
+    + (overLimit ? ' — over limit ⚠️' : '') + '</div>';
 
-  const segsHtml = (script.segments||[]).map(seg=>{
+  let segsHtml = '';
+  (script.segments||[]).forEach(function(seg){
     const isBroll = seg.type==='broll';
     const isVo    = seg.type==='vo';
     const cls     = isBroll ? 'broll-seg' : 'agent-seg';
-    return `<div class="seg ${cls}">
-      <div class="seg-tag">${seg.tag}</div>
-      <div class="seg-text${isBroll||isVo?' broll':''}">${seg.text}</div>
-      ${seg.timing?`<div class="seg-note">⏱ ${seg.timing}</div>`:''}
-      ${seg.note?`<div class="seg-note">↳ ${seg.note}</div>`:''}
-    </div>`;
-  }).join('');
+    const textClass = (isBroll||isVo) ? 'seg-text broll' : 'seg-text';
+    segsHtml += '<div class="seg '+cls+'">';
+    segsHtml += '<div class="seg-tag">'+seg.tag+'</div>';
+    segsHtml += '<div class="'+textClass+'">'+seg.text+'</div>';
+    if(seg.timing) segsHtml += '<div class="seg-note">⏱ '+seg.timing+'</div>';
+    if(seg.note)   segsHtml += '<div class="seg-note">↳ '+seg.note+'</div>';
+    segsHtml += '</div>';
+  });
 
   const hookScore = concept.hookScore;
-  const hookScoreHtml = hookScore ? `
-    <div style="display:flex;align-items:center;gap:8px;margin-top:6px">
-      <div style="font-size:10px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:0.5px">Hook strength</div>
-      <div style="display:flex;gap:3px">${[1,2,3,4,5].map(i=>`<div style="width:16px;height:4px;border-radius:2px;background:${i<=hookScore?'var(--gold)':'var(--bg4)'}"></div>`).join('')}</div>
-      <div style="font-size:11px;color:var(--text3)">${hookScore}/5</div>
-    </div>` : '';
+  let hookScoreHtml = '';
+  if(hookScore){
+    let bars = '';
+    for(let i=1;i<=5;i++){
+      bars += '<div style="width:16px;height:4px;border-radius:2px;background:'+(i<=hookScore?'var(--gold)':'var(--bg4)')+'"></div>';
+    }
+    hookScoreHtml = '<div style="display:flex;align-items:center;gap:8px;margin-top:6px">'
+      + '<div style="font-size:10px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:0.5px">Hook strength</div>'
+      + '<div style="display:flex;gap:3px">'+bars+'</div>'
+      + '<div style="font-size:11px;color:var(--text3)">'+hookScore+'/5</div></div>';
+  }
 
   const saved = JSON.stringify({script, concept, property: lastBrief.address||lastBrief.features, date: new Date().toLocaleDateString()});
   currentScript = script;
   currentConcept = concept;
 
-  document.getElementById('script-sheet-body').innerHTML = `
-    <div class="script-view" style="border:none;background:transparent">
-      <div class="sv-header">
-        <div class="sv-title">${concept.emoji||'🎬'} ${script.title||concept.name}</div>
-        <div class="sv-pitch">${script.pitch||concept.pitch}</div>
-        ${hookScoreHtml}
-        ${wordCountHtml}
-      </div>
-      <div class="sv-body">${segsHtml}</div>
-
-      <div style="padding:0 16px 12px">
-        <div style="font-size:10px;font-weight:700;letter-spacing:0.6px;text-transform:uppercase;color:var(--text3);margin-bottom:8px">Rewrite dialogue</div>
-        <div style="display:flex;gap:7px;flex-wrap:wrap">
-          <button class="rw-btn" onclick="rewriteScript('shorter')">✂️ Shorter</button>
-          <button class="rw-btn" onclick="rewriteScript('punchier')">⚡ Punchier</button>
-          <button class="rw-btn" onclick="rewriteScript('funnier')">😄 Funnier</button>
-          <button class="rw-btn" onclick="rewriteScript('warmer')">❤️ Warmer</button>
-          <button class="rw-btn" onclick="rewriteScript('more cinematic')">🎬 Cinematic</button>
-          <button class="rw-btn" onclick="rewriteScript('more luxury')">✨ Luxury</button>
-        </div>
-      </div>
-
-      <div class="sv-actions" style="flex-wrap:wrap;gap:8px">
-        <button class="sv-btn primary" onclick="copyScript(this)">Copy</button>
-        <button class="sv-btn secondary" onclick='saveScript(${saved.replace(/'/g,"&apos;")})'>Save</button>
-        <button class="sv-btn secondary" style="flex:none;width:100%;background:rgba(201,168,76,0.1);color:var(--gold);border-color:rgba(201,168,76,0.3)" onclick="openTP(currentScript)">📱 Teleprompter</button>
-        <button class="sv-btn secondary" style="flex:none;width:100%" onclick="openShotListCurrent()">📋 Shot List</button>
-      </div>
-    </div>`;
+  const el = document.getElementById('script-sheet-body');
+  el.innerHTML = '<div class="script-view" style="border:none;background:transparent">'
+    + '<div class="sv-header">'
+    + '<div class="sv-title">'+(concept.emoji||'🎬')+' '+(script.title||concept.name)+'</div>'
+    + '<div class="sv-pitch">'+(script.pitch||concept.pitch)+'</div>'
+    + hookScoreHtml + wordCountHtml
+    + '</div>'
+    + '<div class="sv-body">'+segsHtml+'</div>'
+    + '<div style="padding:0 16px 12px">'
+    + '<div style="font-size:10px;font-weight:700;letter-spacing:0.6px;text-transform:uppercase;color:var(--text3);margin-bottom:8px">Rewrite dialogue</div>'
+    + '<div style="display:flex;gap:7px;flex-wrap:wrap">'
+    + '<button class="rw-btn" onclick="rewriteScript(\'shorter\')">✂️ Shorter</button>'
+    + '<button class="rw-btn" onclick="rewriteScript(\'punchier\')">⚡ Punchier</button>'
+    + '<button class="rw-btn" onclick="rewriteScript(\'funnier\')">😄 Funnier</button>'
+    + '<button class="rw-btn" onclick="rewriteScript(\'warmer\')">❤️ Warmer</button>'
+    + '<button class="rw-btn" onclick="rewriteScript(\'more cinematic\')">🎬 Cinematic</button>'
+    + '<button class="rw-btn" onclick="rewriteScript(\'more luxury\')">✨ Luxury</button>'
+    + '</div></div>'
+    + '<div class="sv-actions" style="flex-wrap:wrap;gap:8px">'
+    + '<button class="sv-btn primary" onclick="copyScript(this)">Copy</button>'
+    + '<button class="sv-btn secondary" onclick=\'saveScript('+saved.replace(/'/g,"&apos;")+')\'>Save</button>'
+    + '<button class="sv-btn secondary" style="flex:none;width:100%;background:rgba(201,168,76,0.1);color:var(--gold);border-color:rgba(201,168,76,0.3)" onclick="openTP(currentScript)">📱 Teleprompter</button>'
+    + '<button class="sv-btn secondary" style="flex:none;width:100%" onclick="openShotListCurrent()">📋 Shot List</button>'
+    + '</div></div>';
 
   document.getElementById('script-overlay').classList.add('show');
 }
@@ -1693,6 +1705,8 @@ Rules:
     btns.forEach(b=>{ b.disabled=false; b.style.opacity=''; });
   }
 }
+
+function copyScript(btn){
   const segs = [...document.querySelectorAll('#script-sheet-body .seg')].map(s=>{
     const tag  = s.querySelector('.seg-tag')?.textContent||'';
     const text = s.querySelector('.seg-text')?.textContent||'';
@@ -1724,12 +1738,17 @@ function renderSaved(){
     el.innerHTML='<div class="empty"><div class="empty-icon">✦</div><div>No saved scripts yet.<br>Expand a concept and tap Save.</div></div>';
     return;
   }
-  el.innerHTML = saved.map((item,i)=>`
-    <div class="saved-card" onclick="viewSaved(${i})">
-      <div class="saved-title">${item.concept?.emoji||'🎬'} ${item.script?.title||item.concept?.name||'Script'}</div>
-      <div class="saved-meta">${item.property||'No address'} · ${item.date||''}</div>
-      <button class="saved-del" onclick="deleteSaved(event,${i})">Delete</button>
-    </div>`).join('');
+  el.innerHTML = saved.map(function(item,i){
+    const emoji = (item.concept&&item.concept.emoji)||'🎬';
+    const title = (item.script&&item.script.title)||(item.concept&&item.concept.name)||'Script';
+    const property = item.property||'No address';
+    const date = item.date||'';
+    return '<div class="saved-card" onclick="viewSaved('+i+'">'
+      + '<div class="saved-title">'+emoji+' '+title+'</div>'
+      + '<div class="saved-meta">'+property+' · '+date+'</div>'
+      + '<button class="saved-del" onclick="deleteSaved(event,'+i+')">Delete</button>'
+      + '</div>';
+  }).join('');
 }
 
 function viewSaved(i){
